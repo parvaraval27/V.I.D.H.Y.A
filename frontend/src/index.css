@@ -166,7 +166,7 @@
   background-color: #ffffff;
   background-image: 
     linear-gradient(#e5e5f7 1px, transparent 1px),
-    linear-gradient(90deg, #fca5a5 1px, transparent 1px);
+    linear-gradient(90deg, rgba(255, 0, 0, 0.227) 1px, transparent 1px);
   background-size: 100% 2rem, 3rem 100%;
   background-position: 0 1.5rem, 3rem 0;
   background-attachment: local;

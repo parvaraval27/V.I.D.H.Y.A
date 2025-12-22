@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { 
   Code2, 
@@ -19,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Home() {
   const [activeSection, setActiveSection] = useState("hero");
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const features = [
     {
@@ -129,14 +131,21 @@ export default function Home() {
                     : "hover:bg-slate-200 text-slate-600"
                 }`}
               >
-                <div className="w-2 h-2 rounded-full bg-current opacity-60" />
                 Welcome
               </button>
               
               {features.map((feature) => (
                 <button
                   key={feature.id}
-                  onClick={() => scrollToSection(feature.id)}
+                  onClick={() => {
+                    if (feature.id === 'dsa') {
+                      navigate('/dsa');
+                    } else if (feature.id === 'resume') {
+                      navigate('/career');
+                    } else {
+                      scrollToSection(feature.id);
+                    }
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-3 ${
                     activeSection === feature.id 
                       ? "bg-white text-primary border border-primary/20 shadow-sm" 
@@ -184,7 +193,15 @@ export default function Home() {
                   {features.map((feature) => (
                     <button
                       key={feature.id}
-                      onClick={() => scrollToSection(feature.id)}
+                      onClick={() => {
+                        if (feature.id === 'dsa') {
+                          navigate('/dsa');
+                        } else if (feature.id === 'resume') {
+                          navigate('/career');
+                        } else {
+                          scrollToSection(feature.id);
+                        }
+                      }}
                       className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-200 text-slate-600 font-medium flex items-center gap-3"
                     >
                       <div className={`p-1.5 rounded-md ${feature.bgColor} ${feature.color}`}>
@@ -192,7 +209,7 @@ export default function Home() {
                       </div>
                       {feature.title}
                     </button>
-                  ))}
+                  ))} 
                 </nav>
               </div>
              </div>
@@ -272,67 +289,7 @@ export default function Home() {
                       {feature.description}
                     </p>
                     
-                    {/* Mock Content / Visuals for each section */}
-                    <Card className="mt-6 border-slate-200 shadow-sm bg-white/80 backdrop-blur-sm overflow-hidden group hover:shadow-md transition-all">
-                      <CardContent className="p-0">
-                         {feature.id === 'dsa' && (
-                           <div className="p-6 space-y-3">
-                             <div className="flex justify-between items-center text-sm font-medium text-slate-500">
-                               <span>Daily Streak</span>
-                               <span className="text-orange-500">🔥 12 Days</span>
-                             </div>
-                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                               <div className="h-full w-[65%] bg-blue-500 rounded-full" />
-                             </div>
-                             <div className="grid grid-cols-2 gap-2 mt-4">
-                               <div className="p-3 bg-slate-50 rounded-lg text-sm border border-slate-100">Arrays & Hashing</div>
-                               <div className="p-3 bg-slate-50 rounded-lg text-sm border border-slate-100">Dynamic Prog.</div>
-                             </div>
-                           </div>
-                         )}
-                         
-                         {feature.id === 'resume' && (
-                           <div className="p-6 flex items-center gap-4">
-                             <div className="h-16 w-12 bg-slate-200 rounded border border-slate-300 shadow-sm flex items-center justify-center">
-                               <div className="w-8 h-1 bg-slate-300 rounded-full" />
-                             </div>
-                             <div className="space-y-1">
-                               <div className="font-medium text-slate-800">Software Engineer_v2.pdf</div>
-                               <div className="text-sm text-slate-500">Last edited 2 hours ago</div>
-                             </div>
-                             <Button size="sm" variant="secondary" className="ml-auto">Edit</Button>
-                           </div>
-                         )}
-                         
-                         {feature.id === 'ai' && (
-                           <div className="p-4 bg-purple-50/50">
-                             <div className="flex gap-3 mb-3">
-                               <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                                 <Bot className="w-4 h-4" />
-                               </div>
-                               <div className="bg-white p-3 rounded-2xl rounded-tl-none text-sm text-slate-700 shadow-sm border border-purple-100">
-                                 How can I optimize this O(n²) solution?
-                               </div>
-                             </div>
-                             <div className="flex gap-3 flex-row-reverse">
-                               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                 <User className="w-4 h-4 text-slate-500" />
-                               </div>
-                               <div className="bg-primary p-3 rounded-2xl rounded-tr-none text-sm text-white shadow-sm">
-                                 We can use a hash map to bring it down to O(n).
-                               </div>
-                             </div>
-                           </div>
-                         )}
-                         
-                         {/* Fallback for others */}
-                         {['tasks', 'calendar', 'personal'].includes(feature.id) && (
-                           <div className="h-32 bg-slate-50 flex items-center justify-center text-slate-400 font-hand text-lg">
-                             {feature.title} Interface Preview
-                           </div>
-                         )}
-                      </CardContent>
-                    </Card>
+                   
                   </div>
                 </div>
               </section>

@@ -5,8 +5,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import Home from '@/pages/home';
+import DsaHelper from '@/pages/dsa-helper';
 import LoginPage from './pages/LoginPage';
 import NotFound from '@/pages/not-found';
+import CareerCanvas from '@/pages/career-canvas';
 import { ToastProvider } from "@/components/ui/toast"
 
 const queryClient = new QueryClient({
@@ -53,6 +55,14 @@ function AppRouter() {
       <Route
         path="/"
         element={user ? <Home /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/dsa"
+        element={user ? <DsaHelper /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/career"
+        element={user ? <CareerCanvas /> : <Navigate to="/login" />}
       />
       <Route path="*" element={<NotFound />} />
     </Routes>
