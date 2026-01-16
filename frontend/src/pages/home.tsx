@@ -52,7 +52,7 @@ export default function Home() {
       id: "tasks",
       title: "Task Manager",
       icon: <CheckSquare className="w-5 h-5" />,
-      description: "Smart productivity tracking with recurring reminders and analytics.",
+      description: "Smart productivity tracking — build streaks, track daily tasks, recurring reminders, and analytics.",
       color: "text-orange-600",
       bgColor: "bg-orange-100"
     },
@@ -63,14 +63,6 @@ export default function Home() {
       description: "Sync assignments, exams, and contests in one unified view.",
       color: "text-pink-600",
       bgColor: "bg-pink-100"
-    },
-    {
-      id: "habits",
-      title: "Habit Tracker",
-      icon: <Flame className="w-5 h-5" />,
-      description: "Build streaks, track daily habits, and maintain consistency.",
-      color: "text-red-600",
-      bgColor: "bg-red-100"
     },
     {
       id: "personal",
@@ -151,8 +143,8 @@ export default function Home() {
                       navigate('/dsa');
                     } else if (feature.id === 'resume') {
                       navigate('/career');
-                    } else if (feature.id === 'habits') {
-                      navigate('/habits');
+                    } else if (feature.id === 'tasks') {
+                      navigate('/tasks');
                     } else {
                       scrollToSection(feature.id);
                     }
@@ -209,8 +201,8 @@ export default function Home() {
                           navigate('/dsa');
                         } else if (feature.id === 'resume') {
                           navigate('/career');
-                        } else if (feature.id === 'habits') {
-                          navigate('/habits');
+                        } else if (feature.id === 'tasks') {
+                          navigate('/tasks');
                         } else {
                           scrollToSection(feature.id);
                         }
@@ -293,7 +285,6 @@ export default function Home() {
                     {feature.id === 'ai' && <Bot className="w-8 h-8" />}
                     {feature.id === 'tasks' && <CheckSquare className="w-8 h-8" />}
                     {feature.id === 'calendar' && <CalendarIcon className="w-8 h-8" />}
-                    {feature.id === 'habits' && <Flame className="w-8 h-8" />}
                     {feature.id === 'personal' && <User className="w-8 h-8" />}
                   </div>
                   

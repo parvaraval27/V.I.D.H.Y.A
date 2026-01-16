@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Habit } from '@/lib/habitApi';
+import { Task } from '@/lib/taskApi';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,10 +20,10 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
-interface CreateHabitDialogProps {
+interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (habit: Partial<Habit>) => Promise<any>;
+  onSubmit: (task: Partial<Task>) => Promise<any>;
   loading?: boolean;
 }
 
@@ -46,13 +46,22 @@ const visibilityOptions = [
   { value: 'public', label: 'Public' },
 ];
 
-export function CreateHabitDialog({
+export function CreateTaskDialog({
   open,
   onOpenChange,
   onSubmit,
   loading,
-}: CreateHabitDialogProps) {
-  const [formData, setFormData] = useState({
+}: CreateTaskDialogProps) {
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    tags: string[];
+    schedule: { kind: 'daily' | 'weekdays' | 'every_n_days' | 'monthly' | 'custom' };
+    difficulty: 'easy' | 'medium' | 'hard';
+    visibility: 'private' | 'friends' | 'public';
+    target: number;
+    reminder: { enabled: boolean; channels: string[] };
+  }>({
     title: '',
     description: '',
     tags: [] as string[],
@@ -82,7 +91,7 @@ export function CreateHabitDialog({
       setTagInput('');
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating habit:', error);
+      console.error('Error creating task:', error);
     }
   };
 
@@ -105,22 +114,22 @@ export function CreateHabitDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md notebook-modal notebook-paper font-hand">
         <DialogHeader>
-          <DialogTitle>Create New Habit</DialogTitle>
+          <DialogTitle className="font-hand text-xl">Create New Task</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <Label htmlFor="title">Habit Title *</Label>
+            <Label htmlFor="title">Task Title *</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              placeholder="e.g., Morning Meditation"
+              placeholder="e.g., Morning Revision"
               required
             />
           </div>
@@ -134,7 +143,7 @@ export function CreateHabitDialog({
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Why is this habit important?"
+              placeholder="Why is this task important?"
               rows={2}
             />
           </div>
@@ -185,7 +194,7 @@ export function CreateHabitDialog({
             <Label htmlFor="schedule">Schedule</Label>
             <Select
               value={formData.schedule.kind}
-              onValueChange={(value: any) =>
+              onValueChange={(value: 'daily' | 'weekdays' | 'every_n_days' | 'monthly' | 'custom') =>
                 setFormData({
                   ...formData,
                   schedule: { kind: value },
@@ -210,7 +219,7 @@ export function CreateHabitDialog({
             <Label htmlFor="difficulty">Difficulty</Label>
             <Select
               value={formData.difficulty}
-              onValueChange={(value: any) =>
+              onValueChange={(value: 'easy' | 'medium' | 'hard') =>
                 setFormData({ ...formData, difficulty: value })
               }
             >
@@ -232,7 +241,7 @@ export function CreateHabitDialog({
             <Label htmlFor="visibility">Visibility</Label>
             <Select
               value={formData.visibility}
-              onValueChange={(value: any) =>
+              onValueChange={(value: 'private' | 'friends' | 'public') =>
                 setFormData({ ...formData, visibility: value })
               }
             >
@@ -272,7 +281,7 @@ export function CreateHabitDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !formData.title}>
-              {loading ? 'Creating...' : 'Create Habit'}
+              {loading ? 'Creating...' : 'Create Task'}
             </Button>
           </DialogFooter>
         </form>

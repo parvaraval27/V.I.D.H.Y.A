@@ -3,43 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { HabitCard } from '@/components/habits/HabitCard';
-import { CreateHabitDialog } from '@/components/habits/CreateHabitDialog';
-import { useHabits } from '@/hooks/useHabits';
-import { habitAPI } from '@/lib/habitApi';
+import { TaskCard } from '@/components/tasks/TaskCard';
+import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
+import { useTasks } from '@/hooks/useTasks';
+import NotebookLayout from '@/components/notebook/NotebookLayout';
+import { taskAPI } from '@/lib/taskApi';
 
-export function HabitDashboardPage() {
+export function TaskDashboardPage() {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [marking, setMarking] = useState<string | null>(null);
 
-  const { habits, loading, error, fetchHabits, markComplete } = useHabits();
+  const { tasks, loading, error, fetchTasks, markComplete } = useTasks();
 
   useEffect(() => {
-    fetchHabits(false); // Load active habits
+    fetchTasks(false); // Load active tasks
   }, []);
 
-  const handleCreateHabit = async (habitData: any) => {
+  const handleCreateTask = async (taskData: any) => {
     setCreating(true);
     try {
-      await habitAPI.createHabit(habitData);
-      await fetchHabits(false);
+      await taskAPI.createTask(taskData);
+      await fetchTasks(false);
       setDialogOpen(false);
     } catch (error) {
-      console.error('Error creating habit:', error);
+      console.error('Error creating task:', error);
     } finally {
       setCreating(false);
     }
   };
 
-  const handleMarkHabit = async (habitId: string) => {
-    setMarking(habitId);
+  const handleMarkTask = async (taskId: string) => {
+    setMarking(taskId);
     try {
-      await markComplete(habitId);
-      await fetchHabits(false); // Refresh to get updated summary
+      await markComplete(taskId);
+      await fetchTasks(false); // Refresh to get updated summary
     } catch (error) {
-      console.error('Error marking habit:', error);
+      console.error('Error marking task:', error);
     } finally {
       setMarking(null);
     }
@@ -48,23 +49,19 @@ export function HabitDashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
+        <NotebookLayout title="Daily Tasks">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                Daily Habits
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Build streaks and track your progress
-              </p>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Build streaks and track your progress</p>
             </div>
             <Button
               onClick={() => setDialogOpen(true)}
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              New Habit
+              New Task
             </Button>
           </div>
         </div>
@@ -85,7 +82,7 @@ export function HabitDashboardPage() {
         )}
 
         {/* Empty State */}
-        {!loading && habits.length === 0 && (
+        {!loading && tasks.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 dark:text-gray-600 mb-4">
               <svg
@@ -103,39 +100,40 @@ export function HabitDashboardPage() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No habits yet
+              No tasks yet
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Create your first habit to start building a better routine
+              Create your first task to start building a better routine
             </p>
             <Button onClick={() => setDialogOpen(true)}>
-              Create Your First Habit
+              Create Your First Task
             </Button>
           </div>
         )}
 
-        {/* Habits Grid */}
-        {!loading && habits.length > 0 && (
+        {/* Tasks Grid */}
+        {!loading && tasks.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {habits.map((habit) => (
-              <HabitCard
-                key={habit._id}
-                habit={habit}
-                summary={habit.summary}
-                onMark={() => handleMarkHabit(habit._id)}
-                onMarkLoading={marking === habit._id}
-                onClick={() => navigate(`/habits/${habit._id}`)}
+            {tasks.map((task) => (
+              <TaskCard
+                key={task._id}
+                task={task}
+                summary={task.summary}
+                onMark={() => handleMarkTask(task._id)}
+                onMarkLoading={marking === task._id}
+                onClick={() => navigate(`/tasks/${task._id}`)}
               />
             ))}
           </div>
         )}
+        </NotebookLayout>
       </div>
 
       {/* Create Dialog */}
-      <CreateHabitDialog
+      <CreateTaskDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSubmit={handleCreateHabit}
+        onSubmit={handleCreateTask}
         loading={creating}
       />
     </div>

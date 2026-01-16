@@ -1,6 +1,6 @@
 import { api } from './api';
 
-export interface Habit {
+export interface Task {
   _id: string;
   userId: string;
   title: string;
@@ -26,9 +26,13 @@ export interface Habit {
   updatedAt: string;
 }
 
-export interface HabitSummary {
+export interface TaskWithSummary extends Task {
+  summary: TaskSummary | null;
+}
+
+export interface TaskSummary {
   _id: string;
-  habitId: string;
+  taskId: string;
   userId: string;
   currentStreak: number;
   maxStreak: number;
@@ -38,77 +42,77 @@ export interface HabitSummary {
   totalCompletions: number;
 }
 
-export interface HabitLog {
+export interface TaskLog {
   _id: string;
-  habitId: string;
+  taskId: string;
   userId: string;
   date: string;
   count: number;
   createdAt: string;
 }
 
-// Habit API calls
-export const habitAPI = {
-  // List all habits
-  getAllHabits: async (archive = false) => {
-    const { data } = await api.get('/habits', {
+// Task API calls
+export const taskAPI = {
+  // List all tasks
+  getAllTasks: async (archive = false) => {
+    const { data } = await api.get('/tasks', {
       params: { archive },
     });
     return data;
   },
 
-  // Create new habit
-  createHabit: async (habit: Partial<Habit>) => {
-    const { data } = await api.post('/habits', habit);
+  // Create new task
+  createTask: async (task: Partial<Task>) => {
+    const { data } = await api.post('/tasks', task);
     return data;
   },
 
-  // Update habit
-  updateHabit: async (id: string, updates: Partial<Habit>) => {
-    const { data } = await api.put(`/habits/${id}`, updates);
+  // Update task
+  updateTask: async (id: string, updates: Partial<Task>) => {
+    const { data } = await api.put(`/tasks/${id}`, updates);
     return data;
   },
 
-  // Delete (archive) habit
-  deleteHabit: async (id: string) => {
-    const { data } = await api.delete(`/habits/${id}`);
+  // Delete (archive) task
+  deleteTask: async (id: string) => {
+    const { data } = await api.delete(`/tasks/${id}`);
     return data;
   },
 
-  // Mark habit as complete
+  // Mark task as complete
   markComplete: async (id: string, date?: string, count?: number) => {
-    const { data } = await api.post(`/habits/${id}/mark`, {
+    const { data } = await api.post(`/tasks/${id}/mark`, {
       date: date || new Date().toISOString(),
       count: count || 1,
     });
     return data;
   },
 
-  // Unmark habit
+  // Unmark task
   unmarkComplete: async (id: string, date?: string) => {
-    const { data } = await api.post(`/habits/${id}/unmark`, {
+    const { data } = await api.post(`/tasks/${id}/unmark`, {
       date: date || new Date().toISOString(),
     });
     return data;
   },
 
-  // Get habit history
+  // Get task history
   getHistory: async (id: string, from?: string, to?: string) => {
-    const { data } = await api.get(`/habits/${id}/history`, {
+    const { data } = await api.get(`/tasks/${id}/history`, {
       params: { from, to },
     });
     return data;
   },
 
-  // Get habit summary
+  // Get task summary
   getSummary: async (id: string) => {
-    const { data } = await api.get(`/habits/${id}/summary`);
+    const { data } = await api.get(`/tasks/${id}/summary`);
     return data;
   },
 
   // Get dashboard data
   getDashboard: async (range = 30) => {
-    const { data } = await api.get('/habits/dashboard', {
+    const { data } = await api.get('/tasks/dashboard', {
       params: { range },
     });
     return data;

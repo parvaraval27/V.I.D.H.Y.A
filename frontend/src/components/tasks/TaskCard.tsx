@@ -1,20 +1,33 @@
-import { useState } from 'react';
-import { Habit } from '@/lib/habitApi';
+import { useState, useMemo } from 'react';
+import { Task } from '@/lib/taskApi';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Circle, Flame, Target } from 'lucide-react';
+import { Circle, Flame, Target, Pencil, Check } from 'lucide-react';
 
-interface HabitCardProps {
-  habit: Habit;
+interface TaskCardProps {
+  task: Task;
   summary?: any;
   onMark: (date?: string) => void;
   onMarkLoading?: boolean;
   onClick?: () => void;
 }
 
-export function HabitCard({ habit, summary, onMark, onMarkLoading, onClick }: HabitCardProps) {
+function isSameDay(d1?: string | Date, d2?: Date) {
+  if (!d1) return false;
+  const a = new Date(d1);
+  return a.getUTCFullYear() === d2.getUTCFullYear() && a.getUTCMonth() === d2.getUTCMonth() && a.getUTCDate() === d2.getUTCDate();
+}
+
+export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: TaskCardProps) {
   const [isMarking, setIsMarking] = useState(false);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  }, []);
+
+  const doneToday = isSameDay(summary?.lastCompletedAt, today);
 
   const handleMark = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -30,31 +43,27 @@ export function HabitCard({ habit, summary, onMark, onMarkLoading, onClick }: Ha
 
   return (
     <Card 
-      className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+      className="p-4 hover:shadow-lg transition-shadow cursor-pointer notebook-note"
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 dark:text-white">{habit.title}</h3>
-          {habit.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{habit.description}</p>
+          <h3 className="font-hand text-2xl leading-tight">{task.title}</h3>
+          {task.description && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{task.description}</p>
           )}
         </div>
-        <button
-          onClick={handleMark}
-          disabled={isMarking || onMarkLoading}
-          className={`ml-2 p-2 rounded-full transition-all ${
-            isMarking || onMarkLoading
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-green-100 dark:hover:bg-green-900'
-          }`}
-        >
-          {isMarking || onMarkLoading ? (
-            <Circle className="w-6 h-6 text-gray-400" />
-          ) : (
-            <CheckCircle2 className="w-6 h-6 text-green-600 hover:text-green-700" />
-          )}
-        </button>
+        <div className="ml-2">
+          <button
+            onClick={handleMark}
+            disabled={isMarking || onMarkLoading}
+            className={`pencil-checkbox ${doneToday ? 'checked' : ''} ${isMarking || onMarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-pressed={doneToday}
+          >
+            <Pencil className="pencil-icon w-5 h-5 text-gray-700" />
+            <Check className="check-icon w-5 h-5 text-green-600" />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -85,9 +94,9 @@ export function HabitCard({ habit, summary, onMark, onMarkLoading, onClick }: Ha
         </div>
 
         {/* Tags */}
-        {habit.tags?.length > 0 && (
+        {task.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {habit.tags.map(tag => (
+            {task.tags.map(tag => (
               <span
                 key={tag}
                 className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded"
@@ -100,7 +109,7 @@ export function HabitCard({ habit, summary, onMark, onMarkLoading, onClick }: Ha
 
         {/* Difficulty */}
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          Difficulty: <span className="font-medium capitalize">{habit.difficulty}</span>
+          Difficulty: <span className="font-medium capitalize">{task.difficulty}</span>
         </div>
       </div>
     </Card>

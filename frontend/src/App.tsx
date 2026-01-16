@@ -9,8 +9,8 @@ import DsaHelper from '@/pages/dsa-helper';
 import LoginPage from './pages/LoginPage';
 import NotFound from '@/pages/not-found';
 import CareerCanvas from '@/pages/career-canvas';
-import { HabitDashboardPage } from '@/pages/habit-dashboard';
-import { HabitDetailPage } from '@/pages/habit-detail';
+import { TaskDashboardPage } from '@/pages/task-dashboard';
+import { TaskDetailPage } from '@/pages/task-detail';
 import { ToastProvider } from "@/components/ui/toast"
 
 const queryClient = new QueryClient({
@@ -67,12 +67,12 @@ function AppRouter() {
         element={user ? <CareerCanvas /> : <Navigate to="/login" />}
       />
       <Route
-        path="/habits"
-        element={user ? <HabitDashboardPage /> : <Navigate to="/login" />}
+        path="/tasks"
+        element={user ? <TaskDashboardPage /> : <Navigate to="/login" />}
       />
       <Route
-        path="/habits/:id"
-        element={user ? <HabitDetailPage /> : <Navigate to="/login" />}
+        path="/tasks/:id"
+        element={user ? <TaskDetailPage /> : <Navigate to="/login" />}
       />
       <Route path="*" element={<NotFound />} />
     </Routes>

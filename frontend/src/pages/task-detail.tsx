@@ -15,35 +15,36 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useHabitDetail } from '@/hooks/useHabits';
-import { habitAPI } from '@/lib/habitApi';
+import { useTaskDetail } from '@/hooks/useTasks';
+import NotebookLayout from '@/components/notebook/NotebookLayout';
+import { taskAPI } from '@/lib/taskApi';
 
-export function HabitDetailPage() {
+export function TaskDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [habit, setHabit] = useState<any>(null);
-  const [loadingHabit, setLoadingHabit] = useState(true);
+  const [task, setTask] = useState<any>(null);
+  const [loadingTask, setLoadingTask] = useState(true);
   const [historyDays, setHistoryDays] = useState(30);
 
-  const { summary, history, loading: loadingDetail, error, fetchSummary, fetchHistory } = useHabitDetail(id || '');
+  const { summary, history, loading: loadingDetail, error, fetchSummary, fetchHistory } = useTaskDetail(id || '');
 
   useEffect(() => {
     if (!id) return;
 
-    const fetchHabit = async () => {
+    const fetchTask = async () => {
       try {
-        const habits = await habitAPI.getAllHabits(false);
-        const found = habits.find((h: any) => h._id === id);
-        setHabit(found || null);
+        const tasks = await taskAPI.getAllTasks(false);
+        const found = tasks.find((t: any) => t._id === id);
+        setTask(found || null);
       } catch (err) {
-        console.error('Error fetching habit:', err);
+        console.error('Error fetching task:', err);
       } finally {
-        setLoadingHabit(false);
+        setLoadingTask(false);
       }
     };
 
-    fetchHabit();
+    fetchTask();
     fetchSummary();
     fetchHistory(
       new Date(Date.now() - historyDays * 24 * 60 * 60 * 1000).toISOString(),
@@ -52,30 +53,30 @@ export function HabitDetailPage() {
   }, [id, historyDays, fetchSummary, fetchHistory]);
 
   const handleArchive = async () => {
-    if (!habit) return;
+    if (!task) return;
     try {
-      await habitAPI.updateHabit(habit._id, { archive: true });
-      navigate('/habits');
+      await taskAPI.updateTask(task._id, { archive: true });
+      navigate('/tasks');
     } catch (error) {
-      console.error('Error archiving habit:', error);
+      console.error('Error archiving task:', error);
     }
   };
 
   const handleMarkComplete = async () => {
-    if (!habit) return;
+    if (!task) return;
     try {
-      await habitAPI.markComplete(habit._id);
+      await taskAPI.markComplete(task._id);
       await fetchSummary();
       await fetchHistory(
         new Date(Date.now() - historyDays * 24 * 60 * 60 * 1000).toISOString(),
         new Date().toISOString()
       );
     } catch (error) {
-      console.error('Error marking habit:', error);
+      console.error('Error marking task:', error);
     }
   };
 
-  if (loadingHabit) {
+  if (loadingTask) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -83,11 +84,11 @@ export function HabitDetailPage() {
     );
   }
 
-  if (!habit) {
+  if (!task) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-400 mb-4">Habit not found</p>
-        <Button onClick={() => navigate('/habits')}>Back to Habits</Button>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">Task not found</p>
+        <Button onClick={() => navigate('/tasks')}>Back to Tasks</Button>
       </div>
     );
   }
@@ -97,12 +98,13 @@ export function HabitDetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
+        <NotebookLayout title={task.title}>
         {/* Header */}
         <div className="mb-6">
           <Button
             variant="ghost"
             className="mb-4"
-            onClick={() => navigate('/habits')}
+            onClick={() => navigate('/tasks')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -110,13 +112,8 @@ export function HabitDetailPage() {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                {habit.title}
-              </h1>
-              {habit.description && (
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  {habit.description}
-                </p>
+              {task.description && (
+                <p className="text-gray-600 dark:text-gray-400 mt-2">{task.description}</p>
               )}
             </div>
             <div className="flex gap-2">
@@ -208,42 +205,42 @@ export function HabitDetailPage() {
         {/* Details Card */}
         <Card className="p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Habit Details
+            Task Details
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Difficulty</p>
               <p className="font-semibold text-gray-900 dark:text-white capitalize mt-1">
-                {habit.difficulty}
+                {task.difficulty}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Schedule</p>
               <p className="font-semibold text-gray-900 dark:text-white capitalize mt-1">
-                {habit.schedule?.kind.replace('_', ' ')}
+                {task.schedule?.kind.replace('_', ' ')}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Daily Target</p>
               <p className="font-semibold text-gray-900 dark:text-white mt-1">
-                {habit.target}x
+                {task.target}x
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Visibility</p>
               <p className="font-semibold text-gray-900 dark:text-white capitalize mt-1">
-                {habit.visibility}
+                {task.visibility}
               </p>
             </div>
           </div>
 
           {/* Tags */}
-          {habit.tags?.length > 0 && (
+          {task.tags?.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Tags</p>
               <div className="flex flex-wrap gap-1">
-                {habit.tags.map((tag: string) => (
+                {task.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
@@ -289,11 +286,13 @@ export function HabitDetailPage() {
               {history.map((log) => (
                 <div
                   key={log._id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded"
+                  className="flex items-center justify-between p-3 notebook-note"
                 >
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-gray-900 dark:text-white">
+                    <div className="p-2 rounded bg-green-50 text-green-600">
+                      ✓
+                    </div>
+                    <span className="text-sm text-gray-900 dark:text-white font-hand">
                       {new Date(log.date).toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
@@ -309,6 +308,7 @@ export function HabitDetailPage() {
             </div>
           )}
         </Card>
+        </NotebookLayout>
       </div>
     </div>
   );
