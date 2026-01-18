@@ -20,7 +20,14 @@ export interface Task {
   };
   target: number;
   difficulty: 'easy' | 'medium' | 'hard';
-  visibility: 'private' | 'friends' | 'public';
+  // removed visibility; added priority and labelColor
+  priority: 'low' | 'medium' | 'high';
+  labelColor?: string;
+  lastCompletedDate?: string;
+  position?: { x: number; y: number };
+  zIndex?: number;
+  width?: number;
+  height?: number;
   archive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -40,6 +47,8 @@ export interface TaskSummary {
   lastCompletedAt?: string;
   longestGapDays: number;
   totalCompletions: number;
+  weeklyScore?: number;
+  productivityIndex?: number;
 }
 
 export interface TaskLog {
@@ -53,10 +62,10 @@ export interface TaskLog {
 
 // Task API calls
 export const taskAPI = {
-  // List all tasks
-  getAllTasks: async (archive = false) => {
+  // List all tasks (supports filters: archive, tags (comma separated string), priority, status, sort)
+  getAllTasks: async (options: { archive?: boolean; tags?: string; priority?: string; status?: string; sort?: string } = {}) => {
     const { data } = await api.get('/tasks', {
-      params: { archive },
+      params: options,
     });
     return data;
   },
@@ -115,6 +124,40 @@ export const taskAPI = {
     const { data } = await api.get('/tasks/dashboard', {
       params: { range },
     });
+    return data;
+  },
+
+  // Bulk mark/unmark
+  bulkMark: async (ids: string[], date?: string) => {
+    const { data } = await api.post('/tasks/bulk/mark', { ids, date });
+    return data;
+  },
+
+  bulkUnmark: async (ids: string[], date?: string) => {
+    const { data } = await api.post('/tasks/bulk/unmark', { ids, date });
+    return data;
+  },
+
+  // Restore archived task
+  restoreTask: async (id: string) => {
+    const { data } = await api.post(`/tasks/${id}/restore`);
+    return data;
+  },
+
+  // Position updates for sticky board
+  updatePosition: async (id: string, payload: { position?: { x: number; y: number }; zIndex?: number; width?: number; height?: number }) => {
+    const { data } = await api.patch(`/tasks/${id}/position`, payload);
+    return data;
+  },
+
+  bulkUpdatePositions: async (positions: Array<{ id: string; position?: { x: number; y: number }; zIndex?: number; width?: number; height?: number }>) => {
+    const { data } = await api.post('/tasks/positions/bulk', { positions });
+    return data;
+  },
+
+  // Get global statistics
+  getStatistics: async () => {
+    const { data } = await api.get('/tasks/statistics');
     return data;
   },
 };

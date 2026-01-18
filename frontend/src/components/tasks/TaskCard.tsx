@@ -41,16 +41,59 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
 
   const completionPercentage = summary?.completionRate ? Math.round(summary.completionRate * 100) : 0;
 
+  // compute next due date for simple schedules (daily)
+  const nextDue = useMemo(() => {
+    try {
+      if (!task.schedule || task.schedule.kind !== 'daily') return null;
+      const last = summary?.lastCompletedAt ? new Date(summary.lastCompletedAt) : new Date(task.startDate || new Date());
+      const next = new Date(last);
+      next.setDate(next.getDate() + 1);
+      return next;
+    } catch (e) {
+      return null;
+    }
+  }, [task.schedule, summary, task.startDate]);
+
+  const timeRemaining = useMemo(() => {
+    if (!nextDue) return null;
+    const diff = nextDue.getTime() - new Date().getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+    const hours = Math.ceil(diff / (1000 * 60 * 60));
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+    return 'Due now';
+  }, [nextDue]);
+
+  const borderColor = task.labelColor || (task.priority === 'high' ? '#ef4444' : task.priority === 'low' ? '#10b981' : '#1d4ed8');
+
   return (
     <Card 
-      className="p-4 hover:shadow-lg transition-shadow cursor-pointer notebook-note"
+      className="p-4 hover:shadow-lg transition-shadow cursor-pointer notebook-note relative"
       onClick={onClick}
+      style={{ borderLeft: `4px solid ${borderColor}` }}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="font-hand text-2xl leading-tight">{task.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-hand text-2xl leading-tight">{task.title}</h3>
+            {/* Streak badge */}
+            {summary?.currentStreak > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+                <Flame className="w-3 h-3 mr-1 text-orange-500" />
+                {summary.currentStreak}
+              </span>
+            )}
+          </div>
+
           {task.description && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{task.description}</p>
+          )}
+
+          {/* Next due / time remaining */}
+          {nextDue && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Next due: <span className="font-medium">{timeRemaining}</span>
+            </p>
           )}
         </div>
         <div className="ml-2">
@@ -67,7 +110,7 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
       </div>
 
       <div className="space-y-3">
-        {/* Streak */}
+        {/* Streak (detailed) */}
         {summary?.currentStreak > 0 && (
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-orange-500" />

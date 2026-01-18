@@ -9,7 +9,9 @@ import {
   Archive,
   CheckCircle2,
   Circle,
-  Loader2
+  Loader2,
+  Trash2,
+  RotateCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,6 +20,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTaskDetail } from '@/hooks/useTasks';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { taskAPI } from '@/lib/taskApi';
+import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
+import ArchivedTasksDialog from '@/components/tasks/ArchivedTasksDialog';
 
 export function TaskDetailPage() {
   const { id } = useParams();
@@ -34,7 +38,7 @@ export function TaskDetailPage() {
 
     const fetchTask = async () => {
       try {
-        const tasks = await taskAPI.getAllTasks(false);
+        const tasks = await taskAPI.getAllTasks({ archive: false });
         const found = tasks.find((t: any) => t._id === id);
         setTask(found || null);
       } catch (err) {
@@ -52,6 +56,9 @@ export function TaskDetailPage() {
     );
   }, [id, historyDays, fetchSummary, fetchHistory]);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [archivedOpen, setArchivedOpen] = useState(false);
+
   const handleArchive = async () => {
     if (!task) return;
     try {
@@ -59,6 +66,30 @@ export function TaskDetailPage() {
       navigate('/tasks');
     } catch (error) {
       console.error('Error archiving task:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!task) return;
+    if (!confirm('Delete this task permanently?')) return;
+    try {
+      await taskAPI.deleteTask(task._id);
+      navigate('/tasks');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleUpdate = async (updates: Partial<any>) => {
+    if (!task) return;
+    try {
+      await taskAPI.updateTask(task._id, updates as any);
+      // reload the task
+      const tasks = await taskAPI.getAllTasks({ archive: false });
+      const found = tasks.find((t: any) => t._id === id);
+      setTask(found || null);
+    } catch (err) {
+      console.error('Error updating task', err);
     }
   };
 
@@ -117,7 +148,7 @@ export function TaskDetailPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
@@ -129,6 +160,11 @@ export function TaskDetailPage() {
                 <Archive className="w-4 h-4 mr-2" />
                 Archive
               </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+              
             </div>
           </div>
         </div>
@@ -228,10 +264,13 @@ export function TaskDetailPage() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Visibility</p>
-              <p className="font-semibold text-gray-900 dark:text-white capitalize mt-1">
-                {task.visibility}
-              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Priority</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-3 h-3 rounded-full" style={{ background: task.labelColor || (task.priority === 'high' ? '#ef4444' : task.priority === 'low' ? '#10b981' : '#1d4ed8') }} />
+                <p className="font-semibold text-gray-900 dark:text-white capitalize">
+                  {task.priority}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -308,6 +347,13 @@ export function TaskDetailPage() {
             </div>
           )}
         </Card>
+
+        {/* Edit Dialog */}
+        <CreateTaskDialog open={editOpen} onOpenChange={setEditOpen} onSubmit={handleUpdate} loading={false} initialData={task} mode="edit" />
+
+        {/* Archived dialog */}
+        <ArchivedTasksDialog open={archivedOpen} onOpenChange={setArchivedOpen} onRestore={() => { /* nothing else needed here */ }} />
+
         </NotebookLayout>
       </div>
     </div>

@@ -7,7 +7,10 @@ const taskSummarySchema = new mongoose.Schema({
   maxStreak: { type: Number, default: 0 },
   lastCompletedAt: { type: Date, default: null },
   totalCompletions: { type: Number, default: 0 },
-  completionRate: { type: Number, default: 0 }
+  completionRate: { type: Number, default: 0 },
+  // Gamification / productivity metrics
+  weeklyScore: { type: Number, default: 0 },
+  productivityIndex: { type: Number, default: 0 }
 });
 
 taskSummarySchema.index({ userId: 1 });

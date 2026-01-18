@@ -8,7 +8,13 @@ import {
   unmarkTaskComplete,
   getTaskHistory,
   getTaskSummary,
-  getDashboardData
+  getDashboardData,
+  bulkMarkTasks,
+  bulkUnmarkTasks,
+  restoreTask,
+  getStatistics,
+  updateTaskPosition,
+  bulkUpdatePositions
 } from '../controllers/taskController.js';
 import { checkAuth } from '../middleware/auth.js';
 
@@ -19,12 +25,22 @@ router.use(checkAuth);
 
 // Dashboard and aggregate routes
 router.get('/dashboard', getDashboardData);
+router.get('/statistics', getStatistics);
+
+// Bulk operations
+router.post('/bulk/mark', bulkMarkTasks);
+router.post('/bulk/unmark', bulkUnmarkTasks);
+
+// Positioning (sticky board)
+router.patch('/:id/position', updateTaskPosition);
+router.post('/positions/bulk', bulkUpdatePositions);
 
 // Task CRUD operations
 router.get('/', getTasks);
 router.post('/', createTask);
 router.put('/:id', updateTask);
 router.delete('/:id', deleteTask);
+router.post('/:id/restore', restoreTask);
 
 // Task completion tracking
 router.post('/:id/mark', markTaskComplete);

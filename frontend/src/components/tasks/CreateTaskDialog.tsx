@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Task } from '@/lib/taskApi';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,9 @@ interface CreateTaskDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (task: Partial<Task>) => Promise<any>;
   loading?: boolean;
+  // optional for edit mode
+  initialData?: Partial<Task>;
+  mode?: 'create' | 'edit';
 }
 
 const scheduleOptions = [
@@ -40,37 +43,56 @@ const difficultyOptions = [
   { value: 'hard', label: 'Hard' },
 ];
 
-const visibilityOptions = [
-  { value: 'private', label: 'Private' },
-  { value: 'friends', label: 'Friends Only' },
-  { value: 'public', label: 'Public' },
-];
+
 
 export function CreateTaskDialog({
   open,
   onOpenChange,
   onSubmit,
   loading,
+  initialData,
+  mode = 'create',
 }: CreateTaskDialogProps) {
+  const ALLOWED_COLORS = ['#ff7eb9','#ff65a3','#7afcff','#feff9c','#fff740'];
+
   const [formData, setFormData] = useState<{
     title: string;
     description: string;
     tags: string[];
     schedule: { kind: 'daily' | 'weekdays' | 'every_n_days' | 'monthly' | 'custom' };
     difficulty: 'easy' | 'medium' | 'hard';
-    visibility: 'private' | 'friends' | 'public';
+    priority: 'low' | 'medium' | 'high';
+    labelColor?: string;
     target: number;
     reminder: { enabled: boolean; channels: string[] };
-  }>({
+  }>(() => ({
     title: '',
     description: '',
     tags: [] as string[],
     schedule: { kind: 'daily' },
     difficulty: 'medium',
-    visibility: 'private',
+    priority: 'medium',
+    labelColor: ALLOWED_COLORS[3],
     target: 1,
     reminder: { enabled: false, channels: ['in-app'] },
-  });
+  }));
+
+  // when initialData changes or dialog opens for edit, populate the form
+  useEffect(() => {
+    if (open && initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        tags: initialData.tags || [],
+        schedule: initialData.schedule || { kind: 'daily' },
+        difficulty: (initialData.difficulty as any) || 'medium',
+        priority: (initialData.priority as any) || 'medium',
+        labelColor: initialData.labelColor || ALLOWED_COLORS[3],
+        target: initialData.target || 1,
+        reminder: initialData.reminder || { enabled: false, channels: ['in-app'] },
+      });
+    }
+  }, [open, initialData]);
 
   const [tagInput, setTagInput] = useState('');
 
@@ -78,20 +100,24 @@ export function CreateTaskDialog({
     e.preventDefault();
     try {
       await onSubmit(formData);
-      setFormData({
-        title: '',
-        description: '',
-        tags: [],
-        schedule: { kind: 'daily' },
-        difficulty: 'medium',
-        visibility: 'private',
-        target: 1,
-        reminder: { enabled: false, channels: ['in-app'] },
-      });
+      // reset only in create mode
+      if (mode === 'create') {
+        setFormData({
+          title: '',
+          description: '',
+          tags: [],
+          schedule: { kind: 'daily' },
+          difficulty: 'medium',
+          priority: 'medium',
+          labelColor: '#1D4ED8',
+          target: 1,
+          reminder: { enabled: false, channels: ['in-app'] },
+        });
+      }
       setTagInput('');
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error('Error creating/updating task:', error);
     }
   };
 
@@ -116,7 +142,7 @@ export function CreateTaskDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md notebook-modal notebook-paper font-hand">
         <DialogHeader>
-          <DialogTitle className="font-hand text-xl">Create New Task</DialogTitle>
+          <DialogTitle className="font-hand text-xl">{mode === 'edit' ? 'Edit Task' : 'Create New Task'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -236,26 +262,41 @@ export function CreateTaskDialog({
             </Select>
           </div>
 
-          {/* Visibility */}
+          {/* Priority */}
           <div>
-            <Label htmlFor="visibility">Visibility</Label>
+            <Label htmlFor="priority">Priority</Label>
             <Select
-              value={formData.visibility}
-              onValueChange={(value: 'private' | 'friends' | 'public') =>
-                setFormData({ ...formData, visibility: value })
+              value={formData.priority}
+              onValueChange={(value: 'low' | 'medium' | 'high') =>
+                setFormData({ ...formData, priority: value })
               }
             >
-              <SelectTrigger id="visibility">
+              <SelectTrigger id="priority">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {visibilityOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Label Color */}
+          <div>
+            <Label htmlFor="labelColor">Label Color</Label>
+            <div className="flex gap-2 mt-2">
+              {ALLOWED_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={`Choose color ${c}`}
+                  onClick={() => setFormData({ ...formData, labelColor: c })}
+                  className={`w-8 h-8 rounded ${formData.labelColor === c ? 'ring-2 ring-offset-1 ring-indigo-400' : ''}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Target */}
@@ -281,7 +322,7 @@ export function CreateTaskDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !formData.title}>
-              {loading ? 'Creating...' : 'Create Task'}
+              {loading ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Changes' : 'Create Task')}
             </Button>
           </DialogFooter>
         </form>

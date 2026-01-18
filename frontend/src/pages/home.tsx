@@ -145,6 +145,8 @@ export default function Home() {
                       navigate('/career');
                     } else if (feature.id === 'tasks') {
                       navigate('/tasks');
+                    } else if (feature.id === 'calendar') {
+                      navigate('/calendar');
                     } else {
                       scrollToSection(feature.id);
                     }
@@ -203,7 +205,9 @@ export default function Home() {
                           navigate('/career');
                         } else if (feature.id === 'tasks') {
                           navigate('/tasks');
-                        } else {
+                        } else if (feature.id === 'calendar') {
+                          navigate('/calendar');
+                        }else {
                           scrollToSection(feature.id);
                         }
                       }}

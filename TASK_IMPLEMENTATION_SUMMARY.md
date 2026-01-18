@@ -4,7 +4,7 @@ A complete task management module with backend API and frontend UI following the
 
 1. **backend/src/models/Task.js**
    - Main task configuration model
-   - Stores user tasks with schedule, reminders, difficulty, visibility
+   - Stores user tasks with schedule, reminders, difficulty, priority, labelColor, lastCompletedDate
 
 2. **backend/src/models/TaskLog.js**
    - Records individual task completions
@@ -55,6 +55,7 @@ A complete task management module with backend API and frontend UI following the
 
 ✅ **Task Creation** - Full form with all metadata
 ✅ **Dashboard** - Grid view of all tasks with summaries
+✅ **Board** - New sticky-note board (drag, resize, persist positions & z-order)
 ✅ **Detail Page** - Comprehensive task view with statistics
 ✅ **Tags** - Task categorization and organization
 ✅ **Soft Delete** - Archive tasks instead of permanent deletion

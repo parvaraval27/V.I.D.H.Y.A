@@ -10,7 +10,7 @@ export const useTasks = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await taskAPI.getAllTasks(archive);
+      const data = await taskAPI.getAllTasks({ archive });
       setTasks(data);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to fetch tasks');
@@ -51,6 +51,13 @@ export const useTasks = () => {
   const markComplete = useCallback(async (id: string, date?: string) => {
     try {
       const result = await taskAPI.markComplete(id, date);
+      // update local summary & task if returned
+      if (result?.summary) {
+        setTasks(prev => prev.map(t => t._id === id ? { ...t, summary: result.summary } : t));
+      }
+      if (result?.task) {
+        setTasks(prev => prev.map(t => t._id === id ? { ...t, ...result.task } : t));
+      }
       return result;
     } catch (err: any) {
       throw new Error(err?.response?.data?.message || 'Failed to mark task');
@@ -60,11 +67,43 @@ export const useTasks = () => {
   const unmarkComplete = useCallback(async (id: string, date?: string) => {
     try {
       const result = await taskAPI.unmarkComplete(id, date);
+      if (result?.summary) {
+        setTasks(prev => prev.map(t => t._id === id ? { ...t, summary: result.summary } : t));
+      }
+      if (result?.task) {
+        setTasks(prev => prev.map(t => t._id === id ? { ...t, ...result.task } : t));
+      }
       return result;
     } catch (err: any) {
       throw new Error(err?.response?.data?.message || 'Failed to unmark task');
     }
   }, []);
+
+  const updatePosition = useCallback(async (id: string, payload: { position?: { x: number; y: number }; zIndex?: number; width?: number; height?: number }) => {
+    try {
+      const data = await taskAPI.updatePosition(id, payload);
+      setTasks(prev => prev.map(t => t._id === id ? { ...t, ...data.task } : t));
+      return data;
+    } catch (err: any) {
+      throw new Error(err?.response?.data?.message || 'Failed to update position');
+    }
+  }, [setTasks]);
+
+  const bulkUpdatePositions = useCallback(async (positions: Array<{ id: string; position?: { x: number; y: number }; zIndex?: number; width?: number; height?: number }>) => {
+    try {
+      const data = await taskAPI.bulkUpdatePositions(positions);
+      // merge results
+      if (data?.results) {
+        setTasks(prev => prev.map(t => {
+          const found = data.results.find((r: any) => r.id === t._id);
+          return found ? { ...t, ...found } : t;
+        }));
+      }
+      return data;
+    } catch (err: any) {
+      throw new Error(err?.response?.data?.message || 'Failed to bulk update positions');
+    }
+  }, [setTasks]);
 
   return {
     tasks,
@@ -75,7 +114,9 @@ export const useTasks = () => {
     updateTask,
     deleteTask,
     markComplete,
-    unmarkComplete
+    unmarkComplete,
+    updatePosition,
+    bulkUpdatePositions
   };
 };
 

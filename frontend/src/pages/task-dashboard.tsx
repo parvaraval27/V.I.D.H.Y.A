@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
+import ArchivedTasksDialog from '@/components/tasks/ArchivedTasksDialog';
 import { useTasks } from '@/hooks/useTasks';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { taskAPI } from '@/lib/taskApi';
@@ -46,23 +47,33 @@ export function TaskDashboardPage() {
     }
   };
 
+  const [archivedOpen, setArchivedOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
-        <NotebookLayout title="Daily Tasks">
+      <div className="max-w-full mx-auto">
+        <NotebookLayout title="Daily Tasks" wide>
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Build streaks and track your progress</p>
             </div>
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              New Task
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => window.location.href = '/tasks/board'} className="flex items-center gap-2">
+                Board
+              </Button>
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                New Task
+              </Button>
+              <Button onClick={() => setArchivedOpen(true)} variant="outline" className="flex items-center gap-2">
+                Unarchive
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -136,6 +147,9 @@ export function TaskDashboardPage() {
         onSubmit={handleCreateTask}
         loading={creating}
       />
+
+      {/* Archived Dialog */}
+      <ArchivedTasksDialog open={archivedOpen} onOpenChange={setArchivedOpen} onRestore={() => fetchTasks(false)} />
     </div>
   );
 }
