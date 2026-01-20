@@ -19,11 +19,14 @@ const calculateCompletionRate = async (taskId, startDate) => {
   if (!task) return 0;
 
   const today = normalizeDateToMidnight(new Date());
-  const daysSinceStart = Math.floor((today - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+  // Normalize startDate to midnight to avoid negative/zero-day issues when task was created later in the day
+  const start = normalizeDateToMidnight(new Date(startDate));
+  const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
   
   const totalLogs = await TaskLog.countDocuments({ taskId });
   
-  if (daysSinceStart <= 0) return 0;
+  // If daysSinceStart <= 0 treat as day 1 if there are any completions
+  if (daysSinceStart <= 0) return totalLogs > 0 ? 1 : 0;
   return Math.min(totalLogs / daysSinceStart, 1);
 };
 
@@ -289,8 +292,12 @@ export const markTaskComplete = async (req, res) => {
 
     await log.save();
 
+    // Find the latest completion date for this task (anchor for current streak)
+    const lastLog = await TaskLog.findOne({ taskId: id }).sort({ date: -1 });
+    const anchorDate = lastLog ? lastLog.date : logDate;
+
     // Update task's lastCompletedDate for quick lookups
-    task.lastCompletedDate = logDate;
+    task.lastCompletedDate = anchorDate;
     await task.save();
 
     let summary = await TaskSummary.findOne({ taskId: id });
@@ -301,13 +308,17 @@ export const markTaskComplete = async (req, res) => {
       });
     }
 
-    const currentStreak = await computeStreak(id, logDate);
+    // Compute streak anchored to the most recent completion date
+    const currentStreak = await computeStreak(id, anchorDate);
     summary.currentStreak = currentStreak;
     summary.maxStreak = Math.max(summary.maxStreak, currentStreak);
-    summary.lastCompletedAt = logDate;
-    summary.totalCompletions = (summary.totalCompletions || 0) + 1;
+    summary.lastCompletedAt = anchorDate;
+
+    // Recompute totals from DB to avoid retroactive inconsistencies
+    const totalLogs = await TaskLog.countDocuments({ taskId: id });
+    summary.totalCompletions = totalLogs;
     summary.completionRate = await calculateCompletionRate(id, task.startDate);
-    summary.weeklyScore = await computeWeeklyScore(id, logDate);
+    summary.weeklyScore = await computeWeeklyScore(id, anchorDate);
     summary.productivityIndex = computeProductivityIndex(summary);
 
     await summary.save();

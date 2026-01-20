@@ -30,8 +30,12 @@ function App() {
       <TooltipProvider>
         <ToastProvider>
           <Toaster />
-          <Router>
-            <AppRouter />
+          <Router future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+          <AppRouter />
           </Router>
         </ToastProvider>
       </TooltipProvider>

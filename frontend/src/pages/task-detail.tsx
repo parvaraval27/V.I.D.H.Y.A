@@ -128,18 +128,13 @@ export function TaskDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
-        <NotebookLayout title={task.title}>
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => navigate('/tasks')}
-          >
+      <div className="mx-auto">
+        <NotebookLayout title={task.title} beforeTitle={<Button variant="ghost" className="ml-auto" onClick={() => navigate('/tasks')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
-          </Button>
+          </Button>} wide>
+        {/* Header */}
+        <div className="mb-6">
 
           <div className="flex items-start justify-between">
             <div>
@@ -147,6 +142,7 @@ export function TaskDetailPage() {
                 <p className="text-gray-600 dark:text-gray-400 mt-2">{task.description}</p>
               )}
             </div>
+            
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Edit className="w-4 h-4 mr-2" />

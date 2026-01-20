@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TaskCard } from '@/components/tasks/TaskCard';
@@ -52,7 +52,14 @@ export function TaskDashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 sm:p-6 lg:p-8">
       <div className="max-w-full mx-auto">
-        <NotebookLayout title="Daily Tasks" wide>
+        <NotebookLayout
+          title="Daily Tasks"
+          wide
+          beforeTitle={<Button variant="ghost" className="ml-auto" onClick={() => navigate('/') }>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>}
+        >
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -70,7 +77,7 @@ export function TaskDashboardPage() {
                 <Plus className="w-4 h-4" />
                 New Task
               </Button>
-              <Button onClick={() => setArchivedOpen(true)} variant="outline" className="flex items-center gap-2">
+              <Button onClick={() => setArchivedOpen(true)} className="flex items-center gap-2">
                 Unarchive
               </Button>
             </div>

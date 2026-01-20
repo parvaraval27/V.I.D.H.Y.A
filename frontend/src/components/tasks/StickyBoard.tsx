@@ -4,9 +4,14 @@ import { taskAPI, Task } from '@/lib/taskApi';
 import { useTasks } from '@/hooks/useTasks';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 
 export function StickyBoard() {
-  const { tasks, fetchTasks } = useTasks();
+  
+const navigate = useNavigate();
+const { tasks, fetchTasks } = useTasks();
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
   const maxZRef = useRef(1);
 
@@ -51,11 +56,14 @@ export function StickyBoard() {
   };
 
   return (
-    <NotebookLayout title="Task Board">
+    <NotebookLayout title="Task Board" beforeTitle={<Button variant="ghost" className="ml-auto" onClick={() => navigate('/tasks') }>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>}>
       <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm text-gray-600">Drag notes to arrange them. Overlap is allowed.</div>
+        <div className="text-gray-600">Drag notes to arrange them. Overlap is allowed.</div>
         <div>
-          <Button variant="outline" size="sm" onClick={() => fetchTasks(false)}>Refresh</Button>
+          <Button onClick={() => fetchTasks(false)}>Refresh</Button>
         </div>
       </div>
       
@@ -120,6 +128,7 @@ export function StickyBoard() {
         </div>
       </div>
     </NotebookLayout>
+    
   );
 }
 

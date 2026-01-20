@@ -203,7 +203,7 @@
   /* left margin rule */
   content: "";
   position: absolute;
-  left: 36px;
+  left: 24px;
   top: 0;
   bottom: 0;
   width: 3px;
