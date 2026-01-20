@@ -10,7 +10,8 @@ import {
   User, 
   ArrowRight,
   Menu,
-  X
+  X,
+  Flame
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +52,7 @@ export default function Home() {
       id: "tasks",
       title: "Task Manager",
       icon: <CheckSquare className="w-5 h-5" />,
-      description: "Smart productivity tracking with recurring reminders and analytics.",
+      description: "Smart productivity tracking — build streaks, track daily tasks, recurring reminders, and analytics.",
       color: "text-orange-600",
       bgColor: "bg-orange-100"
     },
@@ -82,12 +83,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-primary/20 p-4 md:p-8 font-sans overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen bg-primary/20 p-2 md:p-4 font-sans overflow-hidden flex items-center justify-center">
       {/* Main Container - The "Notebook" */}
-      <div className="relative w-full max-w-7xl h-[calc(100vh-4rem)] bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-primary/40 flex flex-col md:flex-row">
+      <div className="relative w-full h-[calc(100vh-2rem)] bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-primary/40 flex flex-col md:flex-row">
         
         {/* Decorative Binding Rings (Visual Only) */}
-        <div className="absolute left-0 md:left-[280px] top-0 bottom-0 w-8 z-20 flex flex-col justify-evenly pointer-events-none hidden md:flex">
+        <div className="absolute left-0 md:left-[280px] top-0 bottom-0 w-8 z-20 flex flex-col justify-evenly pointer-events-none md:flex">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="w-6 h-6 -ml-3 rounded-full bg-stone-300 shadow-inner border border-stone-400"></div>
           ))}
@@ -142,6 +143,10 @@ export default function Home() {
                       navigate('/dsa');
                     } else if (feature.id === 'resume') {
                       navigate('/career');
+                    } else if (feature.id === 'tasks') {
+                      navigate('/tasks');
+                    } else if (feature.id === 'calendar') {
+                      navigate('/calendar');
                     } else {
                       scrollToSection(feature.id);
                     }
@@ -198,7 +203,11 @@ export default function Home() {
                           navigate('/dsa');
                         } else if (feature.id === 'resume') {
                           navigate('/career');
-                        } else {
+                        } else if (feature.id === 'tasks') {
+                          navigate('/tasks');
+                        } else if (feature.id === 'calendar') {
+                          navigate('/calendar');
+                        }else {
                           scrollToSection(feature.id);
                         }
                       }}
@@ -304,6 +313,78 @@ export default function Home() {
             </section>
           </div>
         </main>
+
+        {/* Right Sidebar - Quick Stats Dashboard */}
+        <aside className="hidden lg:flex flex-col w-80 bg-slate-50 border-l border-slate-200 relative pt-24 pb-8 px-4 overflow-y-auto">
+          <div className="space-y-6">
+            <div className="pl-4">
+              <h3 className="font-hand text-2xl text-slate-500 mb-4">Quick Stats</h3>
+            </div>
+            
+            {/* Stats Cards */}
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-500">Active Tasks</span>
+                  <CheckSquare className="w-4 h-4 text-orange-500" />
+                </div>
+                <div className="text-2xl font-bold text-slate-800">12</div>
+                <div className="text-xs text-green-600">3 completed today</div>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-500">DSA Problems</span>
+                  <Code2 className="w-4 h-4 text-blue-500" />
+                </div>
+                <div className="text-2xl font-bold text-slate-800">47</div>
+                <div className="text-xs text-green-600">8 this week</div>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-500">Study Streak</span>
+                  <div className="text-orange-500">🔥</div>
+                </div>
+                <div className="text-2xl font-bold text-slate-800">15 days</div>
+                <div className="text-xs text-slate-500">Keep it going!</div>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-500">Upcoming</span>
+                  <CalendarIcon className="w-4 h-4 text-purple-500" />
+                </div>
+                <div className="text-sm font-medium text-slate-800">2 deadlines</div>
+                <div className="text-xs text-red-600">Next: Tomorrow</div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-3 pt-4 border-t border-slate-200">
+              <h4 className="text-sm font-medium text-slate-600">Quick Actions</h4>
+              <Button size="sm" className="w-full justify-start" variant="outline">
+                <Bot className="w-4 h-4 mr-2" />
+                Open AI Assistant
+              </Button>
+              <Button size="sm" className="w-full justify-start" variant="outline">
+                <FileText className="w-4 h-4 mr-2" />
+                New Resume
+              </Button>
+            </div>
+
+            {/* Motivational Quote */}
+            <div className="mt-auto pt-8">
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl">
+                <p className="text-sm text-purple-800 italic">
+                  "Success is the sum of small efforts repeated day in and day out."
+                </p>
+                <p className="text-xs text-purple-600 mt-2">- Robert Collier</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
       </div>
     </div>
   );

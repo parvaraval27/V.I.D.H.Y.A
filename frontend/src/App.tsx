@@ -9,6 +9,10 @@ import DsaHelper from '@/pages/dsa-helper';
 import LoginPage from './pages/LoginPage';
 import NotFound from '@/pages/not-found';
 import CareerCanvas from '@/pages/career-canvas';
+import { TaskDashboardPage } from '@/pages/task-dashboard';
+import { TaskDetailPage } from '@/pages/task-detail';
+import TaskBoardPage from '@/pages/task-board';
+import CalendarPage from '@/pages/calendar';
 import { ToastProvider } from "@/components/ui/toast"
 
 const queryClient = new QueryClient({
@@ -26,8 +30,12 @@ function App() {
       <TooltipProvider>
         <ToastProvider>
           <Toaster />
-          <Router>
-            <AppRouter />
+          <Router future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+          <AppRouter />
           </Router>
         </ToastProvider>
       </TooltipProvider>
@@ -63,6 +71,22 @@ function AppRouter() {
       <Route
         path="/career"
         element={user ? <CareerCanvas /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/tasks"
+        element={user ? <TaskDashboardPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/tasks/board"
+        element={user ? <TaskBoardPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/tasks/:id"
+        element={user ? <TaskDetailPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/calendar"
+        element={user ? <CalendarPage /> : <Navigate to="/login" />}
       />
       <Route path="*" element={<NotFound />} />
     </Routes>
