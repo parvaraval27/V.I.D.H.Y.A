@@ -311,7 +311,7 @@ export function CreateTaskDialog({
                   formData.enableStreak ? 'bg-orange-500 text-white border-orange-500' : 'bg-white border-gray-200'
                 }`}
               >
-                🔥 {formData.enableStreak ? 'On' : 'Off'}
+                 {formData.enableStreak ? 'On' : 'Off'}
               </button>
             </div>
 

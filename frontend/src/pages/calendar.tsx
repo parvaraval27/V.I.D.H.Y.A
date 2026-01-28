@@ -331,59 +331,66 @@ export default function CalendarPage() {
           </Button>
         }>
           <div className="flex gap-6">
-            {/* Left sidebar (purple themed) */}
+            {/* Left sidebar (purple themed with notebook style) */}
             <aside className="w-64">
-              <div className="p-6 rounded-lg shadow-sm" style={{background: THEME_PURPLE, color: 'white'}}>
-                <div className="flex items-start justify-between mb-4">
+              <div className="p-5 rounded-lg border-2 border-dashed border-purple-300 bg-purple-50/50">
+                {/* Date display */}
+                <div className="flex items-start justify-between mb-4 pb-4 border-b border-dashed border-purple-200">
                   <div>
-                    <div className="text-[72px] leading-none font-bold">{(selectedDate || new Date()).getUTCDate()}</div>
-                    <div className="uppercase text-sm font-medium mt-1">{(selectedDate || new Date()).toLocaleString('default',{weekday:'long', timeZone: 'UTC'})}</div>
+                    <div className="font-hand text-6xl text-purple-700">{(selectedDate || new Date()).getUTCDate()}</div>
+                    <div className="font-hand text-lg text-purple-600 mt-1">{(selectedDate || new Date()).toLocaleString('default',{weekday:'long', timeZone: 'UTC'})}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs opacity-80">{(selectedDate || new Date()).toLocaleString('default',{month:'short', timeZone: 'UTC'})} {(selectedDate || new Date()).getUTCFullYear()}</div>
+                    <div className="font-hand text-sm text-purple-500">{(selectedDate || new Date()).toLocaleString('default',{month:'short', timeZone: 'UTC'})} {(selectedDate || new Date()).getUTCFullYear()}</div>
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <h4 className="font-semibold text-white/90">Events This Month</h4>
-                  <div className="text-sm mt-3">
+                {/* Events This Month */}
+                <div className="mb-4">
+                  <h4 className="font-hand text-lg text-purple-800 mb-2">Events This Month</h4>
+                  <div className="text-sm">
                     {occurrences.length ? (
                       <ul className="space-y-2">
                         {occurrences.slice(0,5).map((o,i)=> {
                           const rc = resolveColor(o.color);
                           return (
-                            <li key={i} className="flex items-start gap-3">
-                              <span className="w-2 h-2 rounded-full mt-1" style={{background: rc}}/>
-                              <div className="text-sm text-white" style={{opacity: 0.95}}>{new Date(o.occurrenceDate).toLocaleString()} · {o.title}</div>
+                            <li key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/60 border border-purple-200">
+                              <span className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{background: rc}}/>
+                              <div className="font-hand text-sm text-slate-700 truncate">{new Date(o.occurrenceDate).toLocaleDateString()} · {o.title}</div>
                             </li>
                           );
                         })}
                       </ul>
                     ) : (
-                      <div className="text-sm text-white/80">— no items —</div>
+                      <div className="font-hand text-sm text-purple-400 italic">No events this month</div>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t" style={{borderColor: 'rgba(255,255,255,0.2)'}}>
-                  <div className="flex items-center justify-between">
-                    <div className="text-lg font-semibold">Create an Event</div>
-                    <button onClick={() => openAddDialog()} className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-purple-600">+</button>
-                  </div>
+                {/* Create Event Button */}
+                <div className="mb-4 pt-3 border-t border-dashed border-purple-200">
+                  <button 
+                    onClick={() => openAddDialog()} 
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-purple-100 border border-purple-300 text-purple-700 hover:bg-purple-200 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="font-hand text-base">Add Reminder</span>
+                  </button>
                 </div>
 
-                <div className="mt-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-white/90">Categories</h4>
-                    <button className="text-xs text-white/90" onClick={()=>setTypeDialogOpen(true)}>Add</button>
+                {/* Categories */}
+                <div className="pt-3 border-t border-dashed border-purple-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-hand text-lg text-purple-800">Categories</h4>
+                    <button className="font-hand text-sm text-purple-600 hover:text-purple-800" onClick={()=>setTypeDialogOpen(true)}>+ Add</button>
                   </div>
-                  <div className="flex flex-col gap-2 mt-2 text-sm">
+                  <div className="flex flex-col gap-1.5 text-sm">
                     {types.length ? types.map(t => {
                       const isEnabled = enabledTypeIds.has(t._id);
                       return (
                         <div 
                           key={t._id} 
-                          className="flex items-center gap-2 cursor-pointer select-none"
+                          className={`flex items-center gap-2 cursor-pointer select-none p-1.5 rounded-lg transition-colors ${isEnabled ? 'bg-white/60' : 'opacity-50'}`}
                           onClick={() => {
                             setEnabledTypeIds(prev => {
                               const next = new Set(prev);
@@ -393,39 +400,40 @@ export default function CalendarPage() {
                             });
                           }}
                         >
-                          <span className="w-3 h-3 rounded-full" style={{background: resolveColor(t.color), opacity: isEnabled ? 1 : 0.4}}/>
-                          <span className={isEnabled ? 'text-white' : 'text-white/40'}>{t.name}</span>
+                          <span className="w-3 h-3 rounded-full" style={{background: resolveColor(t.color)}}/>
+                          <span className="font-hand text-slate-700">{t.name}</span>
                         </div>
                       );
                     }) : (
-                      <div className="text-sm text-white/80">— no types —</div>
+                      <div className="font-hand text-sm text-purple-400 italic">No categories yet</div>
                     )}
                   </div>
+                </div>
 
-                  <div className="mt-3 pt-3 border-t" style={{borderColor: 'rgba(255,255,255,0.08)'}}>
-                    <h4 className="font-semibold text-white/90">External Feeds</h4>
-                    <div className="flex flex-col gap-2 text-sm">
-                      <div 
-                        className="flex items-center gap-2 cursor-pointer select-none" 
-                        onClick={() => setShowCfContests(s => !s)}
-                      >
-                        <span className="w-3 h-3 rounded-full" style={{background: '#FF5722', opacity: showCfContests ? 1 : 0.4}}/> 
-                        <span className={showCfContests ? 'text-white' : 'text-white/40'}>Codeforces</span>
-                      </div>
-                      <div 
-                        className="flex items-center gap-2 cursor-pointer select-none" 
-                        onClick={() => setShowLeetCodeContests(s => !s)}
-                      >
-                        <span className="w-3 h-3 rounded-full" style={{background: '#FFA116', opacity: showLeetCodeContests ? 1 : 0.4}}/> 
-                        <span className={showLeetCodeContests ? 'text-white' : 'text-white/40'}>LeetCode</span>
-                      </div>
-                      <div 
-                        className="flex items-center gap-2 cursor-pointer select-none" 
-                        onClick={() => setShowAtCoderContests(s => !s)}
-                      >
-                        <span className="w-3 h-3 rounded-full" style={{background: '#00A0E9', opacity: showAtCoderContests ? 1 : 0.4}}/> 
-                        <span className={showAtCoderContests ? 'text-white' : 'text-white/40'}>AtCoder</span>
-                      </div>
+                {/* External Feeds */}
+                <div className="mt-3 pt-3 border-t border-dashed border-purple-200">
+                  <h4 className="font-hand text-lg text-purple-800 mb-2">External Feeds</h4>
+                  <div className="flex flex-col gap-1.5 text-sm">
+                    <div 
+                      className={`flex items-center gap-2 cursor-pointer select-none p-1.5 rounded-lg transition-colors ${showCfContests ? 'bg-white/60' : 'opacity-50'}`}
+                      onClick={() => setShowCfContests(s => !s)}
+                    >
+                      <span className="w-3 h-3 rounded-full" style={{background: '#FF5722'}}/> 
+                      <span className="font-hand text-slate-700">Codeforces</span>
+                    </div>
+                    <div 
+                      className={`flex items-center gap-2 cursor-pointer select-none p-1.5 rounded-lg transition-colors ${showLeetCodeContests ? 'bg-white/60' : 'opacity-50'}`}
+                      onClick={() => setShowLeetCodeContests(s => !s)}
+                    >
+                      <span className="w-3 h-3 rounded-full" style={{background: '#FFA116'}}/> 
+                      <span className="font-hand text-slate-700">LeetCode</span>
+                    </div>
+                    <div 
+                      className={`flex items-center gap-2 cursor-pointer select-none p-1.5 rounded-lg transition-colors ${showAtCoderContests ? 'bg-white/60' : 'opacity-50'}`}
+                      onClick={() => setShowAtCoderContests(s => !s)}
+                    >
+                      <span className="w-3 h-3 rounded-full" style={{background: '#00A0E9'}}/> 
+                      <span className="font-hand text-slate-700">AtCoder</span>
                     </div>
                   </div>
                 </div>
@@ -436,21 +444,21 @@ export default function CalendarPage() {
             <main className="flex-1">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <button onClick={prevMonth} className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center"><ChevronLeft className="w-4 h-4"/></button>
-                  <h2 className="text-2xl font-semibold">{monthLabel}</h2>
-                  <button onClick={nextMonth} className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center"><ChevronRight className="w-4 h-4"/></button>
+                  <button onClick={prevMonth} className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 hover:bg-purple-100 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
+                  <h2 className="font-hand text-2xl text-slate-800">{monthLabel}</h2>
+                  <button onClick={nextMonth} className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 hover:bg-purple-100 transition-colors"><ChevronRight className="w-4 h-4"/></button>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={goToday} className="flex items-center gap-2">Today</Button>
-                  <Button size="sm" className="flex items-center gap-2" onClick={() => openAddDialog()}><Plus className="w-4 h-4"/> Add Reminder</Button>
+                  <button onClick={goToday} className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 border border-purple-300 text-purple-700 hover:bg-purple-200 transition-all font-hand">Today</button>
+                  <button onClick={() => openAddDialog()} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 border border-purple-300 text-purple-700 hover:bg-purple-200 transition-all font-hand"><Plus className="w-4 h-4"/> Add Reminder</button>
                 </div>
               </div>
 
-              <div className="bg-white rounded border shadow-sm p-4">
-                <div className="grid grid-cols-7 gap-2 text-sm text-gray-500 mb-2">
+              <div className="bg-white/80 rounded-lg border-2 border-dashed border-purple-200 p-4">
+                <div className="grid grid-cols-7 gap-2 text-sm text-purple-500 mb-2">
                   {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                    <div key={d} className="text-center font-medium">{d}</div>
+                    <div key={d} className="text-center font-hand font-medium">{d}</div>
                   ))}
                 </div>
 
@@ -464,11 +472,11 @@ export default function CalendarPage() {
                       <div
                         key={idx}
                         onClick={() => onDateCellClick(d)}
-                        className={`min-h-[96px] border rounded p-2 cursor-pointer ${isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'} ${isActive ? 'ring-2 ring-purple-300 bg-purple-50' : ''}`}>
+                        className={`min-h-[96px] border border-purple-100 rounded-lg p-2 cursor-pointer transition-colors ${isCurrentMonth ? 'bg-white/60 hover:bg-purple-50/50' : 'bg-gray-50/50 text-gray-400'} ${isActive ? 'ring-2 ring-purple-300 bg-purple-50' : ''}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs font-semibold">{d.getUTCDate()}</div>
-                          <button onClick={(e)=>{ e.stopPropagation(); openAddDialog(d); }} className="w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center text-sm">
-                            <Plus className="w-4 h-4" />
+                          <div className="font-hand text-sm font-semibold text-slate-600">{d.getUTCDate()}</div>
+                          <button onClick={(e)=>{ e.stopPropagation(); openAddDialog(d); }} className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center text-sm hover:bg-purple-100 transition-colors">
+                            <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
@@ -478,18 +486,18 @@ export default function CalendarPage() {
                             const timeStr = new Date(o.occurrenceDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             if (o.url) {
                               return (
-                                <a key={i} href={o.url} target="_blank" rel="noreferrer" className="rounded p-1 text-xs truncate block" style={{background: hexToRgba(rc, 0.12), color: rc}} title={o.title}>
+                                <a key={i} href={o.url} target="_blank" rel="noreferrer" className="rounded-lg p-1.5 text-xs truncate block font-hand" style={{background: hexToRgba(rc, 0.12), color: rc}} title={o.title}>
                                   {o.title} · {timeStr}
                                 </a>
                               );
                             }
                             return (
-                              <div key={i} className="rounded p-1 text-xs truncate" style={{background: hexToRgba(rc, 0.12), color: rc}} title={o.title}>
+                              <div key={i} className="rounded-lg p-1.5 text-xs truncate font-hand" style={{background: hexToRgba(rc, 0.12), color: rc}} title={o.title}>
                                 {o.title} · {timeStr}
                               </div>
                             );
                           })}
-                          {items.length > 3 && (<div className="text-xs text-gray-500">+{items.length - 3} more</div>)}
+                          {items.length > 3 && (<div className="font-hand text-xs text-gray-500">+{items.length - 3} more</div>)}
                         </div>
                       </div>
                     );
@@ -503,28 +511,30 @@ export default function CalendarPage() {
 
       {/* Add/Edit Reminder Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="border-2 border-dashed border-purple-200 bg-purple-50/100">
           <DialogHeader>
-            <DialogTitle>Add Reminder</DialogTitle>
+            <DialogTitle className="font-hand text-xl text-purple-800">Add Reminder</DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Title</label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Reminder title" />
+          <div className="grid gap-3">
+            <div>
+              <label className="font-hand text-sm text-slate-700">Title</label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Reminder title" className="mt-1 border-purple-200 focus:border-purple-400" />
+            </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium">Date</label>
-                <Input type="date" value={dateStr} onChange={e=>setDateStr(e.target.value)} />
+                <label className="font-hand text-sm text-slate-700">Date</label>
+                <Input type="date" value={dateStr} onChange={e=>setDateStr(e.target.value)} className="mt-1 border-purple-200 focus:border-purple-400" />
               </div>
               <div>
-                <label className="text-sm font-medium">Time</label>
-                <Input type="time" value={timeStr} onChange={e=>setTimeStr(e.target.value)} />
+                <label className="font-hand text-sm text-slate-700">Time</label>
+                <Input type="time" value={timeStr} onChange={e=>setTimeStr(e.target.value)} className="mt-1 border-purple-200 focus:border-purple-400" />
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium">Type</label>
+              <label className="font-hand text-sm text-slate-700">Type</label>
               <Select value={typeId ?? '__none'} onValueChange={(val:any)=>{
                 if (val === '__none') {
                   setTypeId(null);
@@ -535,7 +545,7 @@ export default function CalendarPage() {
                   if (selectedType?.color) setColor(selectedType.color);
                 }
               }}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Select type"/></SelectTrigger>
+                <SelectTrigger className="w-full mt-1 border-purple-200"><SelectValue placeholder="Select type"/></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={'__none'}>None</SelectItem>
                   {types.map(t=> <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>)}
@@ -543,18 +553,18 @@ export default function CalendarPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {/* Only show color picker when no type is selected */}
               {!typeId ? (
                 <div>
-                  <label className="text-sm font-medium">Color</label>
-                  <div className="flex gap-2 mt-1">
+                  <label className="font-hand text-sm text-slate-700">Color</label>
+                  <div className="flex gap-2 mt-1.5">
                     {['#6D28D9', '#BE185D', '#047857', '#0F766E', '#A16207'].map(c => (
                       <button
                         key={c}
                         type="button"
                         onClick={() => setColor(c)}
-                        className={`w-6 h-6 rounded-full border-2 transition-all ${color === c ? 'border-gray-900 scale-110' : 'border-transparent'}`}
+                        className={`w-6 h-6 rounded-full border-2 transition-all ${color === c ? 'border-purple-600 scale-110' : 'border-transparent'}`}
                         style={{ background: c }}
                       />
                     ))}
@@ -562,17 +572,17 @@ export default function CalendarPage() {
                 </div>
               ) : (
                 <div>
-                  <label className="text-sm font-medium">Color</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="w-6 h-6 rounded-full border-2 border-gray-300" style={{ background: color }} />
-                    <span className="text-xs text-gray-500">From category</span>
+                  <label className="font-hand text-sm text-slate-700">Color</label>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="w-6 h-6 rounded-full border-2 border-purple-200" style={{ background: color }} />
+                    <span className="font-hand text-xs text-slate-500">From category</span>
                   </div>
                 </div>
               )}
               <div>
-                <label className="text-sm font-medium">Repeat</label>
+                <label className="font-hand text-sm text-slate-700">Repeat</label>
                 <Select value={repeatKind} onValueChange={(val:any)=>setRepeatKind(val)}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="single"/></SelectTrigger>
+                  <SelectTrigger className="w-full mt-1 border-purple-200"><SelectValue placeholder="single"/></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={'single'}>Single</SelectItem>
                     <SelectItem value={'monthly'}>Monthly</SelectItem>
@@ -581,35 +591,35 @@ export default function CalendarPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Every</label>
-                <div className="flex items-center gap-1">
-                  <Input type="number" min={1} value={String(interval)} onChange={e=>setInterval(Number(e.target.value || 1))} className="w-16" />
-                  <span className="text-sm text-gray-500">{repeatKind === 'monthly' ? 'month(s)' : repeatKind === 'yearly' ? 'year(s)' : ''}</span>
+                <label className="font-hand text-sm text-slate-700">Every</label>
+                <div className="flex items-center gap-1 mt-1">
+                  <Input type="number" min={1} value={String(interval)} onChange={e=>setInterval(Number(e.target.value || 1))} className="w-16 border-purple-200" />
+                  <span className="font-hand text-sm text-slate-500">{repeatKind === 'monthly' ? 'month(s)' : repeatKind === 'yearly' ? 'year(s)' : ''}</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium">Repeat Until (optional)</label>
-              <Input type="date" value={until} onChange={e=>setUntil(e.target.value)} />
+              <label className="font-hand text-sm text-slate-700">Repeat Until (optional)</label>
+              <Input type="date" value={until} onChange={e=>setUntil(e.target.value)} className="mt-1 border-purple-200" />
             </div>
           </div>
 
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={()=>setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submitReminder}>Create</Button>
+          <DialogFooter className="mt-4 gap-2">
+            <button onClick={()=>setDialogOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 transition-all font-hand">Cancel</button>
+            <button onClick={submitReminder} className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 border border-purple-300 text-purple-700 hover:bg-purple-200 transition-all font-hand">Create</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Day Details Popup */}
       <Dialog open={dayPopupOpen} onOpenChange={setDayPopupOpen}>
-        <DialogContent className="day-popup-content">
+        <DialogContent className="day-popup-content border-2 border-dashed border-purple-200 bg-purple-50/30">
           <DialogHeader>
-            <DialogTitle>Events on {activeDay ? activeDay.toLocaleDateString() : ''}</DialogTitle>
+            <DialogTitle className="font-hand text-xl text-purple-800">Events on {activeDay ? activeDay.toLocaleDateString() : ''}</DialogTitle>
             <div>
-              <button aria-label="Add reminder for this day" onClick={()=>{ setDayPopupOpen(false); if (activeDay) openAddDialog(activeDay); }} className="absolute right-12 top-4 w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
-              <button aria-label="Close day popup" onClick={()=>setDayPopupOpen(false)} className="absolute right-4 top-4 w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center"><X className="w-4 h-4" /></button>
+              <button aria-label="Add reminder for this day" onClick={()=>{ setDayPopupOpen(false); if (activeDay) openAddDialog(activeDay); }} className="absolute right-12 top-4 w-8 h-8 rounded-lg bg-purple-100 border border-purple-200 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"><Plus className="w-4 h-4" /></button>
+              <button aria-label="Close day popup" onClick={()=>setDayPopupOpen(false)} className="absolute right-4 top-4 w-8 h-8 rounded-lg bg-white border border-purple-200 text-purple-600 flex items-center justify-center hover:bg-purple-50 transition-colors"><X className="w-4 h-4" /></button>
             </div>
           </DialogHeader>
 
@@ -617,18 +627,18 @@ export default function CalendarPage() {
             {activeDay ? (
               (occMap[formatDateKey(activeDay)] || []).length ? (
                 (occMap[formatDateKey(activeDay)] || []).map((o:any, i:number)=> (
-                  <div key={i} className="flex items-center gap-3 p-2 border rounded">
+                  <div key={i} className="flex items-center gap-3 p-3 border border-purple-200 rounded-lg bg-white/60">
                     <span className="w-3 h-3 rounded-full" style={{background: resolveColor(o.color)}} />
                     <div className="flex-1">
-                      <div className="font-medium">{o.title} {o.source && <span className="text-xs ml-2 text-gray-500">· {o.source === 'codeforces' ? 'Codeforces' : (o.source === 'leetcode' ? 'LeetCode' : (o.source === 'codechef' ? 'CodeChef' : (o.source === 'atcoder' ? 'AtCoder' : o.source)))}</span>}</div>
-                      <div className="text-xs text-muted-foreground">{new Date(o.occurrenceDate).toLocaleString()}</div>
-                      {o.url && (<a href={o.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">Open on {o.source === 'codeforces' ? 'Codeforces' : (o.source === 'leetcode' ? 'LeetCode' : (o.source === 'codechef' ? 'CodeChef' : (o.source === 'atcoder' ? 'AtCoder' : 'Source')))}</a>)}
+                      <div className="font-hand font-medium text-slate-800">{o.title} {o.source && <span className="font-hand text-xs ml-2 text-slate-500">· {o.source === 'codeforces' ? 'Codeforces' : (o.source === 'leetcode' ? 'LeetCode' : (o.source === 'codechef' ? 'CodeChef' : (o.source === 'atcoder' ? 'AtCoder' : o.source)))}</span>}</div>
+                      <div className="font-hand text-xs text-slate-500">{new Date(o.occurrenceDate).toLocaleString()}</div>
+                      {o.url && (<a href={o.url} target="_blank" rel="noreferrer" className="font-hand text-xs text-purple-600 hover:text-purple-800">Open on {o.source === 'codeforces' ? 'Codeforces' : (o.source === 'leetcode' ? 'LeetCode' : (o.source === 'codechef' ? 'CodeChef' : (o.source === 'atcoder' ? 'AtCoder' : 'Source')))}</a>)}
                     </div>
                     {/* Delete button - only for user reminders (not external contests) */}
                     {!o.source && o.reminderId && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="w-7 h-7 rounded-full hover:bg-red-100 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
+                          <button className="w-7 h-7 rounded-lg hover:bg-red-100 border border-transparent hover:border-red-200 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
@@ -691,13 +701,13 @@ export default function CalendarPage() {
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-gray-600">No events for this day.</div>
+                <div className="font-hand text-sm text-slate-500 italic">No events for this day.</div>
               )
             ) : null}
           </div>
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={()=>setDayPopupOpen(false)}>Close</Button>
+            <button onClick={()=>setDayPopupOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 transition-all font-hand">Close</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -707,31 +717,35 @@ export default function CalendarPage() {
 
       {/* Create Type Dialog */}
       <Dialog open={typeDialogOpen} onOpenChange={setTypeDialogOpen}>
-        <DialogContent>
+        <DialogContent className="border-2 border-dashed border-purple-200 bg-purple-50/30">
           <DialogHeader>
-            <DialogTitle>Create Type</DialogTitle>
+            <DialogTitle className="font-hand text-xl text-purple-800">Create Category</DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Name</label>
-            <Input value={newTypeName} onChange={e=>setNewTypeName(e.target.value)} placeholder="Work, Personal" />
-            <label className="text-sm font-medium">Color</label>
-            <div className="flex gap-2 mt-1">
-              {['#6D28D9', '#BE185D', '#047857', '#0F766E', '#A16207'].map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setNewTypeColor(c)}
-                  className={`w-6 h-6 rounded-full border-2 transition-all ${newTypeColor === c ? 'border-gray-900 scale-110' : 'border-transparent'}`}
-                  style={{ background: c }}
-                />
-              ))}
+          <div className="grid gap-3">
+            <div>
+              <label className="font-hand text-sm text-slate-700">Name</label>
+              <Input value={newTypeName} onChange={e=>setNewTypeName(e.target.value)} placeholder="Work, Personal" className="mt-1 border-purple-200 focus:border-purple-400" />
+            </div>
+            <div>
+              <label className="font-hand text-sm text-slate-700">Color</label>
+              <div className="flex gap-2 mt-1.5">
+                {['#6D28D9', '#BE185D', '#047857', '#0F766E', '#A16207'].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setNewTypeColor(c)}
+                    className={`w-6 h-6 rounded-full border-2 transition-all ${newTypeColor === c ? 'border-purple-600 scale-110' : 'border-transparent'}`}
+                    style={{ background: c }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={()=>setTypeDialogOpen(false)}>Cancel</Button>
-            <Button onClick={createType}>Create</Button>
+          <DialogFooter className="mt-4 gap-2">
+            <button onClick={()=>setTypeDialogOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 transition-all font-hand">Cancel</button>
+            <button onClick={createType} className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 border border-purple-300 text-purple-700 hover:bg-purple-200 transition-all font-hand">Create</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

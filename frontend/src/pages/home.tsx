@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { taskAPI } from "@/lib/taskApi";
-import { getReminders } from "@/lib/calendarApi";
+import { getReminders, getCodeforcesContests, getLeetCodeContests } from "@/lib/calendarApi";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("hero");
@@ -78,11 +78,38 @@ export default function Home() {
         const now = new Date();
         const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const response = await getReminders({ from: now.toISOString(), to: weekLater.toISOString() });
-        const occurrences = response.data?.occurrences || [];
+        let allEvents: { title: string; date: Date }[] = [];
         
-        const upcomingEvents = occurrences
-          .map((e: any) => ({ title: e.title, date: new Date(e.occurrenceDate) }))
-          .sort((a: any, b: any) => a.date.getTime() - b.date.getTime())
+        // Add reminders
+        const occurrences = response.data?.occurrences || [];
+        occurrences.forEach((e: any) => {
+          allEvents.push({ title: e.title, date: new Date(e.occurrenceDate) });
+        });
+
+        // Add Codeforces contests
+        try {
+          const cf = await getCodeforcesContests();
+          if (cf?.status === 'OK') {
+            const fromTS = Math.floor(now.getTime() / 1000);
+            const toTS = Math.floor(weekLater.getTime() / 1000);
+            cf.result.filter((c: any) => c.phase === 'BEFORE' && c.startTimeSeconds >= fromTS && c.startTimeSeconds <= toTS)
+              .forEach((c: any) => allEvents.push({ title: c.name, date: new Date(c.startTimeSeconds * 1000) }));
+          }
+        } catch (e) { /* ignore */ }
+
+        // Add LeetCode contests
+        try {
+          const lc = await getLeetCodeContests();
+          if (lc?.contests) {
+            const fromTS = Math.floor(now.getTime() / 1000);
+            const toTS = Math.floor(weekLater.getTime() / 1000);
+            lc.contests.filter((c: any) => c.startTime >= fromTS && c.startTime <= toTS)
+              .forEach((c: any) => allEvents.push({ title: c.title, date: new Date(c.startTime * 1000) }));
+          }
+        } catch (e) { /* ignore */ }
+        
+        const upcomingEvents = allEvents
+          .sort((a, b) => a.date.getTime() - b.date.getTime())
           .slice(0, 3);
 
         setStats(prev => ({
