@@ -4,19 +4,19 @@ import { taskAPI, Task } from '@/lib/taskApi';
 import { useTasks } from '@/hooks/useTasks';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 
 export function StickyBoard() {
   
 const navigate = useNavigate();
-const { tasks, fetchTasks } = useTasks();
+const { tasks, loading, fetchTasks } = useTasks();
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
   const maxZRef = useRef(1);
 
   useEffect(() => {
-    fetchTasks(false);
+    fetchTasks({ archive: false });
   }, [fetchTasks]);
 
   useEffect(() => {
@@ -63,9 +63,19 @@ const { tasks, fetchTasks } = useTasks();
       <div className="mb-4 flex items-center justify-between">
         <div className="text-gray-600">Drag notes to arrange them. Overlap is allowed.</div>
         <div>
-          <Button onClick={() => fetchTasks(false)}>Refresh</Button>
+          <Button onClick={() => fetchTasks({ archive: false })}>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Refresh
+          </Button>
         </div>
       </div>
+      
+      {/* Loading State */}
+      {loading && localTasks.length === 0 && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-yellow-600" />
+        </div>
+      )}
       
       <div
         className="w-full h-[80vh] bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded overflow-auto relative"
@@ -91,7 +101,7 @@ const { tasks, fetchTasks } = useTasks();
           } as any;
 
           // Use API directly to create and refresh board
-          taskAPI.createTask(newTask).then(() => fetchTasks(false)).catch(err => console.error('Error creating task at position', err));
+          taskAPI.createTask(newTask).then(() => fetchTasks({ archive: false })).catch(err => console.error('Error creating task at position', err));
         }}
       >
         <div style={{ width: 2000, height: 1600, position: 'relative' }}>

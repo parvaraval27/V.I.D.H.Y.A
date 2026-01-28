@@ -8,16 +8,13 @@ export interface Task {
   tags: string[];
   startDate: string;
   schedule: {
-    kind: 'daily' | 'weekdays' | 'every_n_days' | 'monthly' | 'custom';
-    days?: number[];
-    n?: number;
+    kind: 'daily' | 'once' | 'monthly' | 'weekly';
+    interval?: number;
+    daysOfWeek?: number[];
     dayOfMonth?: number;
-  };
-  reminder: {
-    enabled: boolean;
     time?: string;
-    channels: string[];
   };
+
   target: number;
   difficulty: 'easy' | 'medium' | 'hard';
   // removed visibility; added priority and labelColor
@@ -63,9 +60,11 @@ export interface TaskLog {
 // Task API calls
 export const taskAPI = {
   // List all tasks (supports filters: archive, tags (comma separated string), priority, status, sort)
-  getAllTasks: async (options: { archive?: boolean; tags?: string; priority?: string; status?: string; sort?: string } = {}) => {
+  getAllTasks: async (options: { archive?: boolean; tags?: string; priority?: string; status?: string; sort?: string; q?: string; completed?: boolean } = {}) => {
+    const tzOffset = -new Date().getTimezoneOffset();
+    const params = { ...options, tz: tzOffset };
     const { data } = await api.get('/tasks', {
-      params: options,
+      params,
     });
     return data;
   },
@@ -82,25 +81,31 @@ export const taskAPI = {
     return data;
   },
 
-  // Delete (archive) task
-  deleteTask: async (id: string) => {
-    const { data } = await api.delete(`/tasks/${id}`);
+  // Delete (archive) task. Pass { permanent: true } to permanently delete
+  deleteTask: async (id: string, options?: { permanent?: boolean }) => {
+    const params: any = {};
+    if (options?.permanent) params.permanent = true;
+    const { data } = await api.delete(`/tasks/${id}`, { params });
     return data;
   },
 
   // Mark task as complete
   markComplete: async (id: string, date?: string, count?: number) => {
+    const tzOffset = -new Date().getTimezoneOffset();
     const { data } = await api.post(`/tasks/${id}/mark`, {
       date: date || new Date().toISOString(),
       count: count || 1,
+      timezoneOffset: tzOffset
     });
     return data;
   },
 
   // Unmark task
   unmarkComplete: async (id: string, date?: string) => {
+    const tzOffset = -new Date().getTimezoneOffset();
     const { data } = await api.post(`/tasks/${id}/unmark`, {
       date: date || new Date().toISOString(),
+      timezoneOffset: tzOffset
     });
     return data;
   },

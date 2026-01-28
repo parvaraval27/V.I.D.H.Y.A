@@ -10,8 +10,7 @@ import {
   CheckCircle2,
   Circle,
   Loader2,
-  Trash2,
-  RotateCw
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -66,17 +65,6 @@ export function TaskDetailPage() {
       navigate('/tasks');
     } catch (error) {
       console.error('Error archiving task:', error);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!task) return;
-    if (!confirm('Delete this task permanently?')) return;
-    try {
-      await taskAPI.deleteTask(task._id);
-      navigate('/tasks');
-    } catch (error) {
-      console.error('Error deleting task:', error);
     }
   };
 
@@ -135,214 +123,182 @@ export function TaskDetailPage() {
           </Button>} wide>
         {/* Header */}
         <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {task.description && (
+              <p className="font-hand text-lg text-slate-600 leading-relaxed max-w-xl">{task.description}</p>
+            )}
+            
+            <div className="flex gap-2 shrink-0">
+              <button 
+                onClick={() => setEditOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </button>
+              <button 
+                onClick={handleArchive}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all"
+              >
+                <Archive className="w-4 h-4" />
+                Archive
+              </button>
+              <button 
+                onClick={async ()=>{
+                  if (!confirm('Permanently delete this task? This cannot be undone.')) return;
+                  try {
+                    await taskAPI.deleteTask(task._id, { permanent: true });
+                    navigate('/tasks');
+                  } catch (e) {
+                    console.error('Permanent delete failed', e);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-all"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
 
-          <div className="flex items-start justify-between">
-            <div>
-              {task.description && (
-                <p className="text-gray-600 dark:text-gray-400 mt-2">{task.description}</p>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Left Column - Stats & Action */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Stats Stack */}
+            <div className="bg-amber-50/50 rounded-lg border border-dashed border-amber-300 p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-dashed border-amber-200">
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Current Streak</p>
+                  <p className="font-hand text-2xl text-slate-800">{summary?.currentStreak || 0} <span className="text-base text-slate-500">days</span></p>
+                </div>
+                <Flame className="w-6 h-6 text-orange-400" />
+              </div>
+              
+              <div className="flex items-center justify-between pb-3 border-b border-dashed border-amber-200">
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Best Streak</p>
+                  <p className="font-hand text-2xl text-slate-800">{summary?.maxStreak || 0} <span className="text-base text-slate-500">days</span></p>
+                </div>
+                <TrendingUp className="w-6 h-6 text-blue-400" />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Completion Rate</p>
+                  <p className="font-hand text-2xl text-slate-800">{completionPercentage}%</p>
+                </div>
+                <Calendar className="w-6 h-6 text-green-400" />
+              </div>
+            </div>
+
+            {/* Mark Complete */}
+            <Button
+              size="lg"
+              className="w-full font-hand text-lg bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleMarkComplete}
+            >
+              <CheckCircle2 className="w-5 h-5 mr-2" />
+              Mark Complete
+            </Button>
+
+            {/* Quick Info */}
+            <div className="bg-amber-50/50 rounded-lg border border-dashed border-amber-300 p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Difficulty</p>
+                  <p className="font-hand text-lg text-slate-800 capitalize">{task.difficulty}</p>
+                </div>
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Schedule</p>
+                  <p className="font-hand text-lg text-slate-800 capitalize">{task.schedule?.kind.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Target</p>
+                  <p className="font-hand text-lg text-slate-800">{task.target}x daily</p>
+                </div>
+                <div>
+                  <p className="font-hand text-sm text-amber-700">Priority</p>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: task.labelColor || (task.priority === 'high' ? '#ef4444' : task.priority === 'low' ? '#10b981' : '#3b82f6') }} />
+                    <p className="font-hand text-lg text-slate-800 capitalize">{task.priority}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {task.tags?.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-dashed border-amber-300">
+                  <div className="flex flex-wrap gap-1.5">
+                    {task.tags.map((tag: string) => (
+                      <span key={tag} className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded border border-amber-300 font-hand text-sm">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleArchive}
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                Archive
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </Button>
-              
-            </div>
-          </div>
-        </div>
-
-        {/* Main Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Current Streak */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Current Streak
-                </p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                  {summary?.currentStreak || 0}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  days
-                </p>
-              </div>
-              <Flame className="w-8 h-8 text-orange-500" />
-            </div>
-          </Card>
-
-          {/* Max Streak */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Best Streak
-                </p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                  {summary?.maxStreak || 0}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  days
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-blue-500" />
-            </div>
-          </Card>
-
-          {/* Completion Rate */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Completion Rate
-                </p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                  {completionPercentage}%
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  overall
-                </p>
-              </div>
-              <Calendar className="w-8 h-8 text-green-500" />
-            </div>
-          </Card>
-        </div>
-
-        {/* Mark Complete Button */}
-        <div className="mb-6">
-          <Button
-            size="lg"
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
-            onClick={handleMarkComplete}
-          >
-            <CheckCircle2 className="w-5 h-5 mr-2" />
-            Mark Today's Completion
-          </Button>
-        </div>
-
-        {/* Details Card */}
-        <Card className="p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Task Details
-          </h2>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Difficulty</p>
-              <p className="font-semibold text-gray-900 dark:text-white capitalize mt-1">
-                {task.difficulty}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Schedule</p>
-              <p className="font-semibold text-gray-900 dark:text-white capitalize mt-1">
-                {task.schedule?.kind.replace('_', ' ')}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Daily Target</p>
-              <p className="font-semibold text-gray-900 dark:text-white mt-1">
-                {task.target}x
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Priority</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-3 h-3 rounded-full" style={{ background: task.labelColor || (task.priority === 'high' ? '#ef4444' : task.priority === 'low' ? '#10b981' : '#1d4ed8') }} />
-                <p className="font-semibold text-gray-900 dark:text-white capitalize">
-                  {task.priority}
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Tags */}
-          {task.tags?.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Tags</p>
-              <div className="flex flex-wrap gap-1">
-                {task.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* History */}
-        <Card className="p-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Recent History
-            </h2>
-            <div className="flex gap-2 mt-3">
-              {[7, 30, 90].map((days) => (
-                <Button
-                  key={days}
-                  variant={historyDays === days ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setHistoryDays(days)}
-                >
-                  Last {days}d
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {loadingDetail ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-            </div>
-          ) : history.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              No completions in this period
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {history.map((log) => (
-                <div
-                  key={log._id}
-                  className="flex items-center justify-between p-3 notebook-note"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded bg-green-50 text-green-600">
-                      ✓
-                    </div>
-                    <span className="text-sm text-gray-900 dark:text-white font-hand">
-                      {new Date(log.date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {log.count}x completed
-                  </span>
+          {/* Right Column - History */}
+          <div className="lg:col-span-2">
+            <div className="bg-amber-50/50 rounded-lg border border-dashed border-amber-300 p-5 h-full">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-dashed border-amber-200">
+                <h2 className="font-hand text-xl text-amber-800">History</h2>
+                <div className="flex gap-1">
+                  {[7, 30, 90].map((days) => (
+                    <button
+                      key={days}
+                      onClick={() => setHistoryDays(days)}
+                      className={`px-3 py-1 font-hand text-sm rounded-lg border transition-colors ${
+                        historyDays === days 
+                          ? 'bg-amber-200 border-amber-400 text-amber-900' 
+                          : 'border-amber-200 text-amber-700 hover:bg-amber-100'
+                      }`}
+                    >
+                      {days}d
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {loadingDetail ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+                </div>
+              ) : history.length === 0 ? (
+                <div className="text-center py-12 text-amber-600">
+                  <Circle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-hand">No completions in this period</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {history.map((log) => (
+                    <div
+                      key={log._id}
+                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/50 border border-amber-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-green-600 font-hand text-xl">✓</span>
+                        <span className="font-hand text-slate-700">
+                          {new Date(log.date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      <span className="font-hand text-sm text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-200">
+                        {log.count}×
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </Card>
+          </div>
+        </div>
 
         {/* Edit Dialog */}
         <CreateTaskDialog open={editOpen} onOpenChange={setEditOpen} onSubmit={handleUpdate} loading={false} initialData={task} mode="edit" />

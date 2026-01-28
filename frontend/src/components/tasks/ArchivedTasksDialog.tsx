@@ -13,6 +13,8 @@ interface ArchivedTasksDialogProps {
 export default function ArchivedTasksDialog({ open, onOpenChange, onRestore }: ArchivedTasksDialogProps) {
   const [archived, setArchived] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const fetchArchived = async () => {
     setLoading(true);
@@ -27,7 +29,10 @@ export default function ArchivedTasksDialog({ open, onOpenChange, onRestore }: A
   };
 
   useEffect(() => {
-    if (open) fetchArchived();
+    if (open) {
+      fetchArchived();
+      setConfirmDeleteAll(false);
+    }
   }, [open]);
 
   const handleRestore = async (id: string) => {
@@ -43,11 +48,29 @@ export default function ArchivedTasksDialog({ open, onOpenChange, onRestore }: A
   const handleDelete = async (id: string) => {
     if (!confirm('Permanently delete this task? This cannot be undone.')) return;
     try {
-      await taskAPI.deleteTask(id);
+      await taskAPI.deleteTask(id, { permanent: true });
       await fetchArchived();
       onRestore && onRestore();
     } catch (err) {
       console.error('Error deleting task', err);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!confirmDeleteAll) {
+      setConfirmDeleteAll(true);
+      return;
+    }
+    setDeletingAll(true);
+    try {
+      await Promise.all(archived.map(t => taskAPI.deleteTask(t._id, { permanent: true })));
+      await fetchArchived();
+      onRestore && onRestore();
+      setConfirmDeleteAll(false);
+    } catch (err) {
+      console.error('Error deleting all tasks', err);
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -83,7 +106,41 @@ export default function ArchivedTasksDialog({ open, onOpenChange, onRestore }: A
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex items-center gap-2 sm:justify-between">
+          <div className="flex items-center gap-2">
+            {archived.length > 0 && (
+              confirmDeleteAll ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-red-600">Delete {archived.length} tasks?</span>
+                  <Button 
+                    size="sm" 
+                    variant="destructive" 
+                    onClick={handleDeleteAll}
+                    disabled={deletingAll}
+                  >
+                    {deletingAll ? 'Deleting...' : 'Yes, Delete All'}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setConfirmDeleteAll(false)}
+                    disabled={deletingAll}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="destructive" 
+                  onClick={handleDeleteAll}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete All
+                </Button>
+              )
+            )}
+          </div>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
