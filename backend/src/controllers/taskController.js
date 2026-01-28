@@ -19,8 +19,8 @@ const normalizeDateToMidnight = (date, timezoneOffsetMinutes = 0) => {
   return result;
 };
 
-// Helper to calculate completion rate
-const calculateCompletionRate = async (taskId, startDate) => {
+// Helper to calculate completion rate (considers task target/frequency)
+const calculateCompletionRate = async (taskId, startDate, target = 1) => {
   const task = await Task.findById(taskId);
   if (!task) return 0;
 
@@ -29,15 +29,20 @@ const calculateCompletionRate = async (taskId, startDate) => {
   const start = normalizeDateToMidnight(new Date(startDate));
   const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
   
-  const totalLogs = await TaskLog.countDocuments({ taskId });
+  // Sum all counts from logs (not just count documents)
+  const logs = await TaskLog.find({ taskId });
+  const totalCompletions = logs.reduce((sum, log) => sum + (log.count || 1), 0);
+  
+  // Expected completions = daysSinceStart * target (times per day)
+  const expectedCompletions = daysSinceStart * target;
   
   // If daysSinceStart <= 0 treat as day 1 if there are any completions
-  if (daysSinceStart <= 0) return totalLogs > 0 ? 1 : 0;
-  return Math.min(totalLogs / daysSinceStart, 1);
+  if (daysSinceStart <= 0) return totalCompletions > 0 ? Math.min(totalCompletions / target, 1) : 0;
+  return Math.min(totalCompletions / expectedCompletions, 1);
 };
 
-// Helper to compute streak
-const computeStreak = async (taskId, currentDate, timezoneOffsetMinutes = 0) => {
+// Helper to compute streak (considers task target - day is only counted if count >= target)
+const computeStreak = async (taskId, currentDate, timezoneOffsetMinutes = 0, target = 1) => {
   let streak = 1;
   let prevDate = new Date(currentDate);
   prevDate.setDate(prevDate.getDate() - 1);
@@ -48,7 +53,8 @@ const computeStreak = async (taskId, currentDate, timezoneOffsetMinutes = 0) => 
       date: normalizeDateToMidnight(prevDate, timezoneOffsetMinutes)
     });
 
-    if (!log) break;
+    // Only count the day if log exists AND count >= target
+    if (!log || (log.count || 1) < target) break;
 
     streak++;
     prevDate.setDate(prevDate.getDate() - 1);
@@ -105,7 +111,20 @@ export const getTasks = async (req, res) => {
     const summaryMap = {};
     summaries.forEach(s => { summaryMap[String(s.taskId)] = s; });
 
-    let tasksWithSummary = tasks.map(task => ({ ...task, summary: summaryMap[String(task._id)] || null }));
+    // Get today's logs to include todayCount in summary
+    const today = normalizeDateToMidnight(new Date(), timezoneOffset);
+    const todayLogs = await TaskLog.find({ taskId: { $in: taskIds }, date: today }).lean();
+    const todayCountMap = {};
+    todayLogs.forEach(log => { todayCountMap[String(log.taskId)] = log.count || 1; });
+
+    let tasksWithSummary = tasks.map(task => {
+      const summary = summaryMap[String(task._id)] || null;
+      const todayCount = todayCountMap[String(task._id)] || 0;
+      return {
+        ...task,
+        summary: summary ? { ...summary, todayCount } : { todayCount }
+      };
+    });
 
     // Text query search
     if (q) {
@@ -370,23 +389,48 @@ export const markTaskComplete = async (req, res) => {
     }
 
     // Compute streak anchored to the most recent completion date if task has streaks enabled
-    const currentStreak = task.enableStreak ? await computeStreak(id, anchorDate, tzOffset) : 0;
+    // For tasks with target > 1, only count the day as completed for streak if count >= target
+    let currentStreak = 0;
+    const taskTarget = task.target || 1;
+    if (task.enableStreak) {
+      // Get today's log to check if fully completed
+      const todayLog = await TaskLog.findOne({ taskId: id, date: logDate });
+      const todayCount = todayLog ? (todayLog.count || 1) : 0;
+      const isFullyCompletedToday = todayCount >= taskTarget;
+      
+      // Only compute streak if today is fully completed
+      if (isFullyCompletedToday) {
+        currentStreak = await computeStreak(id, anchorDate, tzOffset, taskTarget);
+      } else {
+        // Check if yesterday was completed to maintain streak count (but today isn't done yet)
+        const yesterday = new Date(logDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayLog = await TaskLog.findOne({ taskId: id, date: normalizeDateToMidnight(yesterday, tzOffset) });
+        if (yesterdayLog && (yesterdayLog.count || 1) >= taskTarget) {
+          currentStreak = await computeStreak(id, normalizeDateToMidnight(yesterday, tzOffset), tzOffset, taskTarget);
+        }
+      }
+    }
     summary.currentStreak = currentStreak;
     summary.maxStreak = Math.max(summary.maxStreak, currentStreak);
     summary.lastCompletedAt = anchorDate;
 
-    // Recompute totals from DB to avoid retroactive inconsistencies
-    const totalLogs = await TaskLog.countDocuments({ taskId: id });
-    summary.totalCompletions = totalLogs;
-    summary.completionRate = await calculateCompletionRate(id, task.startDate);
+    // Recompute totals from DB - sum all counts for total completions
+    const allLogs = await TaskLog.find({ taskId: id });
+    const totalCompletions = allLogs.reduce((sum, l) => sum + (l.count || 1), 0);
+    summary.totalCompletions = totalCompletions;
+    summary.completionRate = await calculateCompletionRate(id, task.startDate, task.target || 1);
     summary.weeklyScore = await computeWeeklyScore(id, anchorDate, tzOffset);
     summary.productivityIndex = computeProductivityIndex(summary);
 
     await summary.save();
 
+    // Include todayCount in the response
+    const todayCountFinal = log.count || 1;
+
     res.json({
       log: log.toObject(),
-      summary: summary.toObject(),
+      summary: { ...summary.toObject(), todayCount: todayCountFinal },
       task: task.toObject()
     });
   } catch (error) {
@@ -412,13 +456,16 @@ export const unmarkTaskComplete = async (req, res) => {
     const tzOffset = (req.body.timezoneOffset || req.headers['x-timezone-offset']) ? parseInt(req.body.timezoneOffset || req.headers['x-timezone-offset'], 10) || 0 : 0;
     const logDate = normalizeDateToMidnight(date || new Date(), tzOffset);
 
-    const log = await TaskLog.findOne({ taskId: id, date: logDate });
+    let log = await TaskLog.findOne({ taskId: id, date: logDate });
+    let todayCount = 0;
     if (log) {
       if ((log.count || 1) > 1) {
         log.count = (log.count || 1) - 1;
         await log.save();
+        todayCount = log.count;
       } else {
         await TaskLog.deleteOne({ _id: log._id });
+        todayCount = 0;
       }
     } else {
       return res.status(404).json({ message: 'No completion found for that date' });
@@ -432,23 +479,26 @@ export const unmarkTaskComplete = async (req, res) => {
     const lastLog = await TaskLog.findOne({ taskId: id }).sort({ date: -1 });
     summary.lastCompletedAt = lastLog ? lastLog.date : null;
 
-    const totalLogs = await TaskLog.countDocuments({ taskId: id });
-    summary.totalCompletions = totalLogs;
+    // Sum all counts for total completions
+    const allLogs = await TaskLog.find({ taskId: id });
+    const totalCompletions = allLogs.reduce((sum, l) => sum + (l.count || 1), 0);
+    summary.totalCompletions = totalCompletions;
 
-    if (lastLog && task.enableStreak) {
-      summary.currentStreak = await computeStreak(id, lastLog.date, tzOffset);
+    const taskTarget = task.target || 1;
+    if (lastLog && task.enableStreak && (lastLog.count || 1) >= taskTarget) {
+      summary.currentStreak = await computeStreak(id, lastLog.date, tzOffset, taskTarget);
     } else {
       summary.currentStreak = 0;
     }
 
-    summary.completionRate = await calculateCompletionRate(id, task.startDate);
+    summary.completionRate = await calculateCompletionRate(id, task.startDate, taskTarget);
     await summary.save();
 
     // Update task's lastCompletedDate
     task.lastCompletedDate = summary.lastCompletedAt;
     await task.save();
 
-    res.json({ message: 'Task unmarked', summary: summary.toObject(), task: task.toObject() });
+    res.json({ message: 'Task unmarked', summary: { ...summary.toObject(), todayCount }, task: task.toObject() });
   } catch (error) {
     console.error('Error unmarking task:', error);
     res.status(500).json({ message: 'Error unmarking task', error: error.message });
@@ -534,12 +584,16 @@ export const bulkMarkTasks = async (req, res) => {
       let summary = await TaskSummary.findOne({ taskId: id });
       if (!summary) summary = new TaskSummary({ taskId: id, userId: req.user._id });
 
-      const currentStreak = await computeStreak(id, logDate);
+      const taskTarget = task.target || 1;
+      const logCount = log.count || 1;
+      const currentStreak = logCount >= taskTarget ? await computeStreak(id, logDate, 0, taskTarget) : 0;
       summary.currentStreak = currentStreak;
       summary.maxStreak = Math.max(summary.maxStreak, currentStreak);
       summary.lastCompletedAt = logDate;
-      summary.totalCompletions = (summary.totalCompletions || 0) + 1;
-      summary.completionRate = await calculateCompletionRate(id, task.startDate);
+      // Sum all counts for total completions
+      const allLogs = await TaskLog.find({ taskId: id });
+      summary.totalCompletions = allLogs.reduce((sum, l) => sum + (l.count || 1), 0);
+      summary.completionRate = await calculateCompletionRate(id, task.startDate, taskTarget);
       summary.weeklyScore = await computeWeeklyScore(id, logDate);
       summary.productivityIndex = computeProductivityIndex(summary);
       await summary.save();
@@ -573,9 +627,12 @@ export const bulkUnmarkTasks = async (req, res) => {
 
       const lastLog = await TaskLog.findOne({ taskId: id }).sort({ date: -1 });
       summary.lastCompletedAt = lastLog ? lastLog.date : null;
-      summary.totalCompletions = await TaskLog.countDocuments({ taskId: id });
-      summary.currentStreak = lastLog ? await computeStreak(id, lastLog.date) : 0;
-      summary.completionRate = await calculateCompletionRate(id, task.startDate);
+      // Sum all counts for total completions
+      const allLogs = await TaskLog.find({ taskId: id });
+      summary.totalCompletions = allLogs.reduce((sum, l) => sum + (l.count || 1), 0);
+      const taskTarget = task.target || 1;
+      summary.currentStreak = (lastLog && (lastLog.count || 1) >= taskTarget) ? await computeStreak(id, lastLog.date, 0, taskTarget) : 0;
+      summary.completionRate = await calculateCompletionRate(id, task.startDate, taskTarget);
       summary.weeklyScore = await computeWeeklyScore(id, lastLog || new Date());
       summary.productivityIndex = computeProductivityIndex(summary);
       await summary.save();
