@@ -59,6 +59,10 @@ export default function CalendarPage() {
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(new Date()));
 
+  // Module transition state
+  const [showTransition, setShowTransition] = useState(true);
+  const [transitionVisible, setTransitionVisible] = useState(false);
+
   // Codeforces feed toggle & cached contests
   const [showCfContests, setShowCfContests] = useState(true);
   const [cfContests, setCfContests] = useState<any[]>([]);
@@ -140,6 +144,21 @@ export default function CalendarPage() {
     });
     return m;
   }, [occurrences, enabledTypeIds]);
+
+  // Module transition effect
+  useEffect(() => {
+    setTransitionVisible(true);
+    const fadeTimer = setTimeout(() => {
+      setTransitionVisible(false);
+    }, 1000);
+    const finishTimer = setTimeout(() => {
+      setShowTransition(false);
+    }, 1400);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(finishTimer);
+    };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -321,6 +340,15 @@ export default function CalendarPage() {
 
   const navigate = useNavigate();
 
+  // Transition screen
+  if (showTransition) {
+    return (
+      <div className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-all duration-500 ${transitionVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+        <div className="text-6xl font-hand text-purple-800 tracking-wide">Module 5</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-full mx-auto">
@@ -333,7 +361,7 @@ export default function CalendarPage() {
           <div className="flex gap-6">
             {/* Left sidebar (purple themed with notebook style) */}
             <aside className="w-64">
-              <div className="p-5 rounded-lg border-2 border-dashed border-purple-300 bg-purple-50/50">
+              <div className="p-5 rounded-lg border-2 border-dashed border-purple-300 bg-purple-50/100">
                 {/* Date display */}
                 <div className="flex items-start justify-between mb-4 pb-4 border-b border-dashed border-purple-200">
                   <div>
@@ -717,7 +745,7 @@ export default function CalendarPage() {
 
       {/* Create Type Dialog */}
       <Dialog open={typeDialogOpen} onOpenChange={setTypeDialogOpen}>
-        <DialogContent className="border-2 border-dashed border-purple-200 bg-purple-50/30">
+        <DialogContent className="border-2 border-dashed border-purple-200 bg-purple-50/100">
           <DialogHeader>
             <DialogTitle className="font-hand text-xl text-purple-800">Create Category</DialogTitle>
           </DialogHeader>

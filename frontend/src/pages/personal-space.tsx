@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,10 @@ export default function PersonalSpace() {
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<ProfileResponse | null>(null);
   
+  // Module transition state
+  const [showTransition, setShowTransition] = useState(true);
+  const [transitionVisible, setTransitionVisible] = useState(false);
+  
   // Edit mode states for each section
   const [editSection, setEditSection] = useState<string | null>(null);
   
@@ -84,12 +89,22 @@ export default function PersonalSpace() {
   const [newHobby, setNewHobby] = useState('');
 
   useEffect(() => {
+    // Play module transition on mount
+    setTransitionVisible(true);
+    const fadeOut = window.setTimeout(() => setTransitionVisible(false), 1000);
+    const finish = window.setTimeout(() => setShowTransition(false), 1400);
+
+    // Fetch profile in background while transition plays
     fetchProfile();
+
+    return () => {
+      window.clearTimeout(fadeOut);
+      window.clearTimeout(finish);
+    };
   }, []);
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
       const result = await getProfile();
       setData(result);
       
@@ -101,10 +116,10 @@ export default function PersonalSpace() {
       setSkills(result.user.skills || {});
       setStudyPreferences(result.user.studyPreferences || {});
       setUsernameForm(result.user.username);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({ title: 'Failed to load profile' });
-    } finally {
       setLoading(false);
     }
   };
@@ -222,6 +237,17 @@ export default function PersonalSpace() {
     }
   };
 
+  // Module transition screen - check FIRST to show immediately
+  if (showTransition) {
+    return (
+      <div className={`fixed inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center z-50 transition-opacity duration-500 ${transitionVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="text-center">
+          <h1 className="font-hand text-6xl text-amber-800 mb-4">Personal Space</h1>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-amber-50">
@@ -245,13 +271,22 @@ export default function PersonalSpace() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-      <NotebookLayout>
+      <NotebookLayout
+        beforeTitle={
+          <button 
+            onClick={() => navigate('/')} 
+            className="flex items-center gap-2 text-amber-600 hover:text-amber-800 font-hand mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+        }
+      >
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-hand text-4xl text-slate-800 mb-2">Personal Space</h1>
-              
             </div>
           </div>
         </div>
@@ -495,7 +530,7 @@ export default function PersonalSpace() {
                     <Input 
                       value={academic.institution || ''} 
                       onChange={e => setAcademic(prev => ({ ...prev, institution: e.target.value }))}
-                      placeholder="MIT, Stanford..."
+                      placeholder="DAIICT, IITM..."
                       className="mt-1 border-blue-200"
                     />
                   </div>
@@ -522,7 +557,7 @@ export default function PersonalSpace() {
                     <Input 
                       value={academic.expectedGraduation || ''} 
                       onChange={e => setAcademic(prev => ({ ...prev, expectedGraduation: e.target.value }))}
-                      placeholder="May 2025"
+                      placeholder="May 2027"
                       className="mt-1 border-blue-200"
                     />
                   </div>
@@ -578,7 +613,7 @@ export default function PersonalSpace() {
                     <Input 
                       value={career.dreamRole || ''} 
                       onChange={e => setCareer(prev => ({ ...prev, dreamRole: e.target.value }))}
-                      placeholder="Senior Software Engineer at Google"
+                      placeholder="Software Engineer"
                       className="mt-1 border-purple-200"
                     />
                   </div>

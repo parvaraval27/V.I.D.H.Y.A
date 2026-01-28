@@ -22,6 +22,10 @@ export function TaskDashboardPage() {
   const [creating, setCreating] = useState(false);
   const [marking, setMarking] = useState<string | null>(null);
 
+  // Module transition state
+  const [showTransition, setShowTransition] = useState(true);
+  const [transitionVisible, setTransitionVisible] = useState(false);
+
   // Search and filter
   // 'search' is the text input (supports #tag syntax)
   const [search, setSearch] = useState('');
@@ -35,6 +39,21 @@ export function TaskDashboardPage() {
     const q = search.replace(/#\w+/g, '').trim() || undefined;
     return { archive: false, q, tags, completed: showCompleted || undefined };
   };
+
+  // Module transition effect
+  useEffect(() => {
+    setTransitionVisible(true);
+    const fadeTimer = setTimeout(() => {
+      setTransitionVisible(false);
+    }, 1000);
+    const finishTimer = setTimeout(() => {
+      setShowTransition(false);
+    }, 1400);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(finishTimer);
+    };
+  }, []);
 
   useEffect(() => {
     // debounce search to reduce backend calls
@@ -73,6 +92,15 @@ export function TaskDashboardPage() {
   };
 
   const [archivedOpen, setArchivedOpen] = useState(false);
+
+  // Transition screen
+  if (showTransition) {
+    return (
+      <div className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-all duration-500 ${transitionVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+        <div className="text-6xl font-hand text-purple-800 tracking-wide">Module 4</div>
+      </div>
+    );
+  }
 
   return (
     <NotebookLayout
