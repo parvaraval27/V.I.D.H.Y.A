@@ -27,7 +27,64 @@ const userSchema = new mongoose.Schema({
     },
     verificationCode: String,
     resetToken: String,
-    resetTokenExpiry: Date
+    resetTokenExpiry: Date,
+
+    // ========== PROFILE FIELDS ==========
+    
+    // Basic Profile
+    profile: {
+        displayName: { type: String, default: '' },
+        bio: { type: String, default: '' },
+        avatarUrl: { type: String, default: '' },
+        avatarEmoji: { type: String, default: '👨‍💻' }
+    },
+
+    // Academic Info
+    academic: {
+        institution: { type: String, default: '' },
+        major: { type: String, default: '' },
+        year: { type: String, default: '' }, // e.g., "3rd Year", "Junior"
+        expectedGraduation: { type: String, default: '' } // e.g., "May 2025"
+    },
+
+    // Career Goals
+    career: {
+        dreamRole: { type: String, default: '' },
+        targetCompanies: [{ type: String }],
+        shortTermGoals: { type: String, default: '' },
+        longTermGoals: { type: String, default: '' }
+    },
+
+    // Coding Profiles (Social Links)
+    codingProfiles: {
+        leetcode: { type: String, default: '' },
+        codeforces: { type: String, default: '' },
+        github: { type: String, default: '' },
+        linkedin: { type: String, default: '' },
+        portfolio: { type: String, default: '' },
+        twitter: { type: String, default: '' }
+    },
+
+    // Skills & Interests
+    skills: {
+        languages: [{ type: String }],
+        frameworks: [{ type: String }],
+        tools: [{ type: String }],
+        hobbies: [{ type: String }]
+    },
+
+    // Study Preferences
+    studyPreferences: {
+        preferredTime: { type: String, enum: ['morning', 'afternoon', 'evening', 'night'], default: 'morning' },
+        dailyGoalHours: { type: Number, default: 4 },
+        focusMode: { type: Boolean, default: false }
+    },
+
+    // Theme Preferences
+    preferences: {
+        theme: { type: String, enum: ['light', 'dark', 'system'], default: 'light' },
+        notificationsEnabled: { type: Boolean, default: true }
+    }
 }, {
     timestamps: true
 });

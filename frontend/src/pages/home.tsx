@@ -173,7 +173,7 @@ export default function Home() {
       id: "personal",
       title: "Personal Space",
       icon: <User className="w-5 h-5" />,
-      description: "Mood tracking, journaling, and a space to be yourself.",
+      description: "Your profile, academic info, career goals, coding profiles, skills, and productivity stats.",
       color: "text-indigo-600",
       bgColor: "bg-indigo-100"
     }
@@ -252,6 +252,8 @@ export default function Home() {
                       navigate('/tasks');
                     } else if (feature.id === 'calendar') {
                       navigate('/calendar');
+                    } else if (feature.id === 'personal') {
+                      navigate('/profile');
                     } else {
                       scrollToSection(feature.id);
                     }
@@ -312,7 +314,9 @@ export default function Home() {
                           navigate('/tasks');
                         } else if (feature.id === 'calendar') {
                           navigate('/calendar');
-                        }else {
+                        } else if (feature.id === 'personal') {
+                          navigate('/profile');
+                        } else {
                           scrollToSection(feature.id);
                         }
                       }}

@@ -13,6 +13,7 @@ import { TaskDashboardPage } from '@/pages/task-dashboard';
 import { TaskDetailPage } from '@/pages/task-detail';
 import TaskBoardPage from '@/pages/task-board';
 import CalendarPage from '@/pages/calendar';
+import PersonalSpacePage from './pages/personal-space';
 import { ToastProvider } from "@/components/ui/toast"
 
 const queryClient = new QueryClient({
@@ -87,6 +88,10 @@ function AppRouter() {
       <Route
         path="/calendar"
         element={user ? <CalendarPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/profile"
+        element={user ? <PersonalSpacePage /> : <Navigate to="/login" />}
       />
       <Route path="*" element={<NotFound />} />
     </Routes>
