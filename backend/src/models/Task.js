@@ -5,8 +5,18 @@ const taskSchema = new mongoose.Schema({
   title: { type: String, required: [true, 'Task title is required'] },
   description: { type: String },
   tags: { type: [String], default: [] },
-  schedule: { type: Object, default: { kind: 'daily' } },
-  reminder: { type: Object, default: { enabled: false } },
+  schedule: {
+    kind: { type: String, enum: ['daily','once','monthly','weekly'], default: 'daily' },
+    interval: { type: Number, default: 1 },
+    // for weekly repeats, store weekdays as numbers 0..6
+    daysOfWeek: { type: [Number], default: [] },
+    // optional time string like '08:30' used for display
+    time: { type: String, default: null }
+  },
+  // Deadline for tasks (optional)
+  deadline: { type: Date, default: null },
+  // Whether to track streaks for this task
+  enableStreak: { type: Boolean, default: true },
   target: { type: Number, default: 1 },
   difficulty: { type: String, default: 'medium' },
   // priority for sorting and highlights

@@ -6,11 +6,11 @@ export const useTasks = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTasks = useCallback(async (archive = false) => {
+  const fetchTasks = useCallback(async (options: { archive?: boolean; q?: string; tags?: string; completed?: boolean } = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await taskAPI.getAllTasks({ archive });
+      const data = await taskAPI.getAllTasks(options);
       setTasks(data);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to fetch tasks');
@@ -45,6 +45,15 @@ export const useTasks = () => {
       setTasks(tasks.filter(t => t._id !== id));
     } catch (err: any) {
       throw new Error(err?.response?.data?.message || 'Failed to delete task');
+    }
+  }, [tasks]);
+
+  const deleteTaskPermanent = useCallback(async (id: string) => {
+    try {
+      await taskAPI.deleteTask(id, { permanent: true });
+      setTasks(tasks.filter(t => t._id !== id));
+    } catch (err: any) {
+      throw new Error(err?.response?.data?.message || 'Failed to permanently delete task');
     }
   }, [tasks]);
 
@@ -113,6 +122,7 @@ export const useTasks = () => {
     createTask,
     updateTask,
     deleteTask,
+    deleteTaskPermanent,
     markComplete,
     unmarkComplete,
     updatePosition,

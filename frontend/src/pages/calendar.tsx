@@ -1,13 +1,15 @@
 
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, X, Trash2, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { getReminderTypes, getReminders, createReminder, createReminderType } from '@/lib/calendarApi';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { getReminderTypes, getReminders, createReminder, createReminderType, deleteReminder, getCodeforcesContests, getLeetCodeContests, getAtCoderContests } from '@/lib/calendarApi';
 
 function startOfMonth(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0, 0));
@@ -53,8 +55,19 @@ export default function CalendarPage() {
   };
 
   const [types, setTypes] = useState<any[]>([]);
+  const [enabledTypeIds, setEnabledTypeIds] = useState<Set<string>>(new Set());
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(new Date()));
+
+  // Codeforces feed toggle & cached contests
+  const [showCfContests, setShowCfContests] = useState(true);
+  const [cfContests, setCfContests] = useState<any[]>([]);
+  // LeetCode feed toggle & cached contests (proxied via backend)
+  const [showLeetCodeContests, setShowLeetCodeContests] = useState(true);
+  const [leetContests, setLeetContests] = useState<any[]>([]);
+  // AtCoder feed toggle & cached contests
+  const [showAtCoderContests, setShowAtCoderContests] = useState(true);
+  const [atCoderContests, setAtCoderContests] = useState<any[]>([]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -68,7 +81,7 @@ export default function CalendarPage() {
   const [dateStr, setDateStr] = useState('');
   const [timeStr, setTimeStr] = useState('');
   const [typeId, setTypeId] = useState<string | null>(null);
-  const [color, setColor] = useState<string>('#F59E0B');
+  const [color, setColor] = useState<string>('#6D28D9');
   const [repeatKind, setRepeatKind] = useState<'single' | 'monthly' | 'yearly'>('single');
   const [interval, setInterval] = useState<number>(1);
   const [until, setUntil] = useState<string>('');
@@ -76,7 +89,7 @@ export default function CalendarPage() {
   // type creation dialog
   const [typeDialogOpen, setTypeDialogOpen] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeColor, setNewTypeColor] = useState('#F59E0B');
+  const [newTypeColor, setNewTypeColor] = useState('#6D28D9');
 
   const createType = async () => {
     if (!newTypeName) {
@@ -88,7 +101,7 @@ export default function CalendarPage() {
       setTypes(prev => [...prev, res.data]);
       setTypeDialogOpen(false);
       setNewTypeName('');
-      setNewTypeColor('#F59E0B');
+      setNewTypeColor('#6D28D9');
     } catch (e) {
       alert('Failed to create type');
     }
@@ -108,23 +121,34 @@ export default function CalendarPage() {
 
   const gridDates = useMemo(() => getCalendarGrid(currentMonth), [currentMonth]);
 
-  // Map occurrences by UTC dateKey
+  // Map occurrences by UTC dateKey, filtering by enabled types
   const occMap = useMemo(() => {
     const m: Record<string, any[]> = {};
     occurrences.forEach((o:any) => {
+      // Filter: show external feeds always, but filter reminders by enabled type
+      const isExternalFeed = o.source === 'codeforces' || o.source === 'leetcode' || o.source === 'atcoder';
+      // Check type._id (backend returns type object, not typeId directly)
+      const typeId = o.type?._id || o.typeId;
+      const hasType = !!typeId;
+      const isTypeEnabled = !hasType || enabledTypeIds.has(typeId);
+      if (!isExternalFeed && !isTypeEnabled) return;
+      
       const d = new Date(o.occurrenceDate);
       const key = formatDateKey(d);
       if (!m[key]) m[key] = [];
       m[key].push(o);
     });
     return m;
-  }, [occurrences]);
+  }, [occurrences, enabledTypeIds]);
 
   useEffect(() => {
     const load = async () => {
       try {
         const t = await getReminderTypes();
-        setTypes(t.data.types || []);
+        const loadedTypes = t.data.types || [];
+        setTypes(loadedTypes);
+        // Enable all types by default
+        setEnabledTypeIds(new Set(loadedTypes.map((tp: any) => tp._id)));
       } catch (e) {
         // ignore
       }
@@ -134,13 +158,110 @@ export default function CalendarPage() {
       const to = gridDates[gridDates.length - 1];
       try {
         const res = await getReminders({ from: from.toISOString(), to: to.toISOString() });
-        setOccurrences(res.data.occurrences || []);
+        let occs = res.data.occurrences || [];
+
+        // Optionally fetch Codeforces upcoming contests and merge
+        if (showCfContests) {
+          try {
+            const cf = await getCodeforcesContests();
+            if (cf && cf.status === 'OK') {
+              const fromTS = Math.floor(from.getTime() / 1000);
+              const toTS = Math.floor(to.getTime() / 1000);
+              const upcoming = cf.result.filter((c:any) => c.phase === 'BEFORE' && c.startTimeSeconds && c.startTimeSeconds >= fromTS && c.startTimeSeconds <= toTS);
+              const mapped = upcoming.map((c:any) => ({
+                title: c.name,
+                occurrenceDate: new Date(c.startTimeSeconds * 1000).toISOString(),
+                color: '#FF5722',
+                url: `https://codeforces.com/contest/${c.id}`,
+                source: 'codeforces',
+                durationSeconds: c.durationSeconds || 0
+              }));
+              setCfContests(mapped);
+              occs = occs.concat(mapped);
+            } else {
+              setCfContests([]);
+            }
+          } catch (e) {
+            setCfContests([]);
+          }
+        } else {
+          setCfContests([]);
+        }
+
+        // Optionally fetch LeetCode upcoming contests from alfa-leetcode-api
+        if (showLeetCodeContests) {
+          try {
+            const lcRes = await getLeetCodeContests();
+            // Response: { count, contests: [ { title, titleSlug, startTime, duration, ... } ] }
+            if (lcRes && Array.isArray(lcRes.contests)) {
+              const fromTS = Math.floor(from.getTime() / 1000);
+              const toTS = Math.floor(to.getTime() / 1000);
+              const upcoming = lcRes.contests.filter((c:any) => c.startTime && c.startTime >= fromTS && c.startTime <= toTS);
+              const mapped = upcoming.map((c:any) => ({
+                title: c.title,
+                occurrenceDate: new Date(c.startTime * 1000).toISOString(),
+                color: '#FFA116', // LeetCode orange
+                url: `https://leetcode.com/contest/${c.titleSlug}`,
+                source: 'leetcode',
+                durationSeconds: c.duration || 0
+              }));
+              setLeetContests(mapped);
+              occs = occs.concat(mapped);
+            } else {
+              setLeetContests([]);
+            }
+          } catch (e) {
+            setLeetContests([]);
+          }
+        } else {
+          setLeetContests([]);
+        }
+
+        // Optionally fetch AtCoder upcoming contests from kontests.net
+        if (showAtCoderContests) {
+          try {
+            const acRes = await getAtCoderContests();
+            console.log('AtCoder API response:', acRes);
+            // Response: [ { name, url, start_time (ISO), end_time, duration (seconds string), site, status } ]
+            if (acRes && Array.isArray(acRes) && acRes.length > 0) {
+              const fromTS = Math.floor(from.getTime() / 1000);
+              const toTS = Math.floor(to.getTime() / 1000);
+              console.log('AtCoder date range:', { from: from.toISOString(), to: to.toISOString(), fromTS, toTS });
+              const upcoming = acRes.filter((c:any) => {
+                const startTS = Math.floor(new Date(c.start_time).getTime() / 1000);
+                console.log('AtCoder contest:', c.name, 'startTS:', startTS, 'in range:', startTS >= fromTS && startTS <= toTS);
+                return startTS >= fromTS && startTS <= toTS;
+              });
+              const mapped = upcoming.map((c:any) => ({
+                title: c.name,
+                occurrenceDate: new Date(c.start_time).toISOString(),
+                color: '#00A0E9', // AtCoder blue
+                url: c.url,
+                source: 'atcoder',
+                durationSeconds: parseInt(c.duration, 10) || 0
+              }));
+              console.log('AtCoder mapped contests:', mapped);
+              setAtCoderContests(mapped);
+              occs = occs.concat(mapped);
+            } else {
+              console.warn('AtCoder API returned empty or invalid data:', acRes);
+              setAtCoderContests([]);
+            }
+          } catch (e) {
+            console.error('AtCoder fetch error:', e);
+            setAtCoderContests([]);
+          }
+        } else {
+          setAtCoderContests([]);
+        }
+
+        setOccurrences(occs);
       } catch (e) {
         setOccurrences([]);
       }
     };
     load();
-  }, [currentMonth]);
+  }, [currentMonth, showCfContests, showLeetCodeContests, showAtCoderContests, gridDates]);
 
   const openAddDialog = (date?: Date) => {
     setSelectedDate(date || startOfMonth(new Date()));
@@ -149,7 +270,7 @@ export default function CalendarPage() {
     setTimeStr('');
     setTitle('');
     setTypeId(null);
-    setColor('#F59E0B');
+    setColor('#6D28D9');
     setRepeatKind('single');
     setInterval(1);
     setUntil('');
@@ -176,8 +297,13 @@ export default function CalendarPage() {
       // reload occurrences for the month
       const res = await getReminders({ from: gridDates[0].toISOString(), to: gridDates[gridDates.length - 1].toISOString() });
       setOccurrences(res.data.occurrences || []);
-    } catch (e) {
-      alert('Failed to create reminder');
+    } catch (e: any) {
+      console.error('Failed to create reminder:', e);
+      if (e.response?.status === 401) {
+        alert('Please log in to create reminders');
+      } else {
+        alert('Failed to create reminder: ' + (e.response?.data?.message || e.message));
+      }
     }
   };
 
@@ -193,10 +319,17 @@ export default function CalendarPage() {
 
   const monthLabel = `${currentMonth.toLocaleString('default', { month: 'long', timeZone: 'UTC' })} ${currentMonth.getUTCFullYear()}`;
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-full mx-auto">
-        <NotebookLayout title="Calendar" wide>
+        <NotebookLayout title="Calendar" wide beforeTitle={
+          <Button variant="ghost" className="ml-auto" onClick={() => navigate('/')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        }>
           <div className="flex gap-6">
             {/* Left sidebar (purple themed) */}
             <aside className="w-64">
@@ -245,11 +378,55 @@ export default function CalendarPage() {
                     <button className="text-xs text-white/90" onClick={()=>setTypeDialogOpen(true)}>Add</button>
                   </div>
                   <div className="flex flex-col gap-2 mt-2 text-sm">
-                    {types.length ? types.map(t => (
-                      <div key={t._id} className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background: resolveColor(t.color)}}/> <span className="text-white">{t.name}</span></div>
-                    )) : (
+                    {types.length ? types.map(t => {
+                      const isEnabled = enabledTypeIds.has(t._id);
+                      return (
+                        <div 
+                          key={t._id} 
+                          className="flex items-center gap-2 cursor-pointer select-none"
+                          onClick={() => {
+                            setEnabledTypeIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(t._id)) next.delete(t._id);
+                              else next.add(t._id);
+                              return next;
+                            });
+                          }}
+                        >
+                          <span className="w-3 h-3 rounded-full" style={{background: resolveColor(t.color), opacity: isEnabled ? 1 : 0.4}}/>
+                          <span className={isEnabled ? 'text-white' : 'text-white/40'}>{t.name}</span>
+                        </div>
+                      );
+                    }) : (
                       <div className="text-sm text-white/80">— no types —</div>
                     )}
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t" style={{borderColor: 'rgba(255,255,255,0.08)'}}>
+                    <h4 className="font-semibold text-white/90">External Feeds</h4>
+                    <div className="flex flex-col gap-2 text-sm">
+                      <div 
+                        className="flex items-center gap-2 cursor-pointer select-none" 
+                        onClick={() => setShowCfContests(s => !s)}
+                      >
+                        <span className="w-3 h-3 rounded-full" style={{background: '#FF5722', opacity: showCfContests ? 1 : 0.4}}/> 
+                        <span className={showCfContests ? 'text-white' : 'text-white/40'}>Codeforces</span>
+                      </div>
+                      <div 
+                        className="flex items-center gap-2 cursor-pointer select-none" 
+                        onClick={() => setShowLeetCodeContests(s => !s)}
+                      >
+                        <span className="w-3 h-3 rounded-full" style={{background: '#FFA116', opacity: showLeetCodeContests ? 1 : 0.4}}/> 
+                        <span className={showLeetCodeContests ? 'text-white' : 'text-white/40'}>LeetCode</span>
+                      </div>
+                      <div 
+                        className="flex items-center gap-2 cursor-pointer select-none" 
+                        onClick={() => setShowAtCoderContests(s => !s)}
+                      >
+                        <span className="w-3 h-3 rounded-full" style={{background: '#00A0E9', opacity: showAtCoderContests ? 1 : 0.4}}/> 
+                        <span className={showAtCoderContests ? 'text-white' : 'text-white/40'}>AtCoder</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -298,9 +475,17 @@ export default function CalendarPage() {
                         <div className="flex flex-col gap-1">
                           {items.slice(0,3).map((o:any,i:number) => {
                             const rc = resolveColor(o.color);
+                            const timeStr = new Date(o.occurrenceDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            if (o.url) {
+                              return (
+                                <a key={i} href={o.url} target="_blank" rel="noreferrer" className="rounded p-1 text-xs truncate block" style={{background: hexToRgba(rc, 0.12), color: rc}} title={o.title}>
+                                  {o.title} · {timeStr}
+                                </a>
+                              );
+                            }
                             return (
                               <div key={i} className="rounded p-1 text-xs truncate" style={{background: hexToRgba(rc, 0.12), color: rc}} title={o.title}>
-                                {new Date(o.occurrenceDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} · {o.title}
+                                {o.title} · {timeStr}
                               </div>
                             );
                           })}
@@ -340,7 +525,16 @@ export default function CalendarPage() {
 
             <div>
               <label className="text-sm font-medium">Type</label>
-              <Select value={typeId ?? '__none'} onValueChange={(val:any)=>setTypeId(val === '__none' ? null : val)}>
+              <Select value={typeId ?? '__none'} onValueChange={(val:any)=>{
+                if (val === '__none') {
+                  setTypeId(null);
+                } else {
+                  setTypeId(val);
+                  // Auto-assign the type's color
+                  const selectedType = types.find(t => t._id === val);
+                  if (selectedType?.color) setColor(selectedType.color);
+                }
+              }}>
                 <SelectTrigger className="w-full"><SelectValue placeholder="Select type"/></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={'__none'}>None</SelectItem>
@@ -350,10 +544,31 @@ export default function CalendarPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-sm font-medium">Color</label>
-                <Input type="color" value={color} onChange={e=>setColor(e.target.value)} />
-              </div>
+              {/* Only show color picker when no type is selected */}
+              {!typeId ? (
+                <div>
+                  <label className="text-sm font-medium">Color</label>
+                  <div className="flex gap-2 mt-1">
+                    {['#6D28D9', '#BE185D', '#047857', '#0F766E', '#A16207'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setColor(c)}
+                        className={`w-6 h-6 rounded-full border-2 transition-all ${color === c ? 'border-gray-900 scale-110' : 'border-transparent'}`}
+                        style={{ background: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium">Color</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="w-6 h-6 rounded-full border-2 border-gray-300" style={{ background: color }} />
+                    <span className="text-xs text-gray-500">From category</span>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium">Repeat</label>
                 <Select value={repeatKind} onValueChange={(val:any)=>setRepeatKind(val)}>
@@ -366,8 +581,11 @@ export default function CalendarPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Interval</label>
-                <Input type="number" min={1} value={String(interval)} onChange={e=>setInterval(Number(e.target.value || 1))} />
+                <label className="text-sm font-medium">Every</label>
+                <div className="flex items-center gap-1">
+                  <Input type="number" min={1} value={String(interval)} onChange={e=>setInterval(Number(e.target.value || 1))} className="w-16" />
+                  <span className="text-sm text-gray-500">{repeatKind === 'monthly' ? 'month(s)' : repeatKind === 'yearly' ? 'year(s)' : ''}</span>
+                </div>
               </div>
             </div>
 
@@ -402,9 +620,74 @@ export default function CalendarPage() {
                   <div key={i} className="flex items-center gap-3 p-2 border rounded">
                     <span className="w-3 h-3 rounded-full" style={{background: resolveColor(o.color)}} />
                     <div className="flex-1">
-                      <div className="font-medium">{o.title}</div>
+                      <div className="font-medium">{o.title} {o.source && <span className="text-xs ml-2 text-gray-500">· {o.source === 'codeforces' ? 'Codeforces' : (o.source === 'leetcode' ? 'LeetCode' : (o.source === 'codechef' ? 'CodeChef' : (o.source === 'atcoder' ? 'AtCoder' : o.source)))}</span>}</div>
                       <div className="text-xs text-muted-foreground">{new Date(o.occurrenceDate).toLocaleString()}</div>
+                      {o.url && (<a href={o.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">Open on {o.source === 'codeforces' ? 'Codeforces' : (o.source === 'leetcode' ? 'LeetCode' : (o.source === 'codechef' ? 'CodeChef' : (o.source === 'atcoder' ? 'AtCoder' : 'Source')))}</a>)}
                     </div>
+                    {/* Delete button - only for user reminders (not external contests) */}
+                    {!o.source && o.reminderId && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="w-7 h-7 rounded-full hover:bg-red-100 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {/* For single events, show "Delete this event" */}
+                          {(!o.repeat || o.repeat?.kind === 'single') && (
+                            <DropdownMenuItem
+                              className="text-red-600 cursor-pointer"
+                              onClick={async () => {
+                                await deleteReminder(o.reminderId);
+                                // Refresh occurrences
+                                const from = startOfMonth(currentMonth).toISOString();
+                                const to = endOfMonth(currentMonth).toISOString();
+                                const res = await getReminders({ from, to });
+                                setOccurrences(res.data.occurrences || []);
+                                setDayPopupOpen(false);
+                              }}
+                            >
+                              Delete this event
+                            </DropdownMenuItem>
+                          )}
+                          {/* For recurring events, show both options */}
+                          {o.repeat?.kind && o.repeat.kind !== 'single' && (
+                            <>
+                              <DropdownMenuItem
+                                className="text-red-600 cursor-pointer"
+                                onClick={async () => {
+                                  // Delete single occurrence by passing the occurrence date
+                                  await deleteReminder(o.reminderId, { occurrenceDate: new Date(o.occurrenceDate).toISOString() });
+                                  // Refresh occurrences
+                                  const from = startOfMonth(currentMonth).toISOString();
+                                  const to = endOfMonth(currentMonth).toISOString();
+                                  const res = await getReminders({ from, to });
+                                  setOccurrences(res.data.occurrences || []);
+                                  setDayPopupOpen(false);
+                                }}
+                              >
+                                Delete this event
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600 cursor-pointer"
+                                onClick={async () => {
+                                  // Delete entire series by passing deleteAll=true
+                                  await deleteReminder(o.reminderId, { deleteAll: true });
+                                  // Refresh occurrences
+                                  const from = startOfMonth(currentMonth).toISOString();
+                                  const to = endOfMonth(currentMonth).toISOString();
+                                  const res = await getReminders({ from, to });
+                                  setOccurrences(res.data.occurrences || []);
+                                  setDayPopupOpen(false);
+                                }}
+                              >
+                                Delete all in series
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 ))
               ) : (
@@ -433,7 +716,17 @@ export default function CalendarPage() {
             <label className="text-sm font-medium">Name</label>
             <Input value={newTypeName} onChange={e=>setNewTypeName(e.target.value)} placeholder="Work, Personal" />
             <label className="text-sm font-medium">Color</label>
-            <Input type="color" value={newTypeColor} onChange={e=>setNewTypeColor(e.target.value)} />
+            <div className="flex gap-2 mt-1">
+              {['#6D28D9', '#BE185D', '#047857', '#0F766E', '#A16207'].map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setNewTypeColor(c)}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${newTypeColor === c ? 'border-gray-900 scale-110' : 'border-transparent'}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
           </div>
 
           <DialogFooter className="mt-4">

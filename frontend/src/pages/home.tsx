@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { 
@@ -11,17 +11,95 @@ import {
   ArrowRight,
   Menu,
   X,
-  Flame
+  Flame,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
+import { taskAPI } from "@/lib/taskApi";
+import { getReminders } from "@/lib/calendarApi";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("hero");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Quick Stats State
+  const [stats, setStats] = useState({
+    activeTasks: 0,
+    completedToday: 0,
+    maxStreak: 0,
+    upcomingEvents: [] as { title: string; date: Date }[],
+    loadingTasks: true,
+    loadingCalendar: true,
+  });
+
+  // Fetch real stats on mount
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch tasks
+        const tasks = await taskAPI.getAllTasks({ archive: false });
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let completedToday = 0;
+        let maxStreak = 0;
+        
+        tasks.forEach((task: any) => {
+          if (task.summary?.lastCompletedAt) {
+            const lastCompleted = new Date(task.summary.lastCompletedAt);
+            lastCompleted.setHours(0, 0, 0, 0);
+            if (lastCompleted.getTime() === today.getTime()) {
+              completedToday++;
+            }
+          }
+          if (task.summary?.currentStreak > maxStreak) {
+            maxStreak = task.summary.currentStreak;
+          }
+        });
+
+        setStats(prev => ({
+          ...prev,
+          activeTasks: tasks.length,
+          completedToday,
+          maxStreak,
+          loadingTasks: false,
+        }));
+      } catch (err) {
+        console.error('Error fetching task stats:', err);
+        setStats(prev => ({ ...prev, loadingTasks: false }));
+      }
+
+      try {
+        // Fetch calendar events for next 7 days
+        const now = new Date();
+        const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const response = await getReminders({ from: now.toISOString(), to: weekLater.toISOString() });
+        const occurrences = response.data?.occurrences || [];
+        
+        const upcomingEvents = occurrences
+          .map((e: any) => ({ title: e.title, date: new Date(e.occurrenceDate) }))
+          .sort((a: any, b: any) => a.date.getTime() - b.date.getTime())
+          .slice(0, 3);
+
+        setStats(prev => ({
+          ...prev,
+          upcomingEvents,
+          loadingCalendar: false,
+        }));
+      } catch (err) {
+        console.error('Error fetching calendar stats:', err);
+        setStats(prev => ({ ...prev, loadingCalendar: false }));
+      }
+    };
+
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
 
   const features = [
     {
@@ -314,72 +392,96 @@ export default function Home() {
           </div>
         </main>
 
-        {/* Right Sidebar - Quick Stats Dashboard */}
-        <aside className="hidden lg:flex flex-col w-80 bg-slate-50 border-l border-slate-200 relative pt-24 pb-8 px-4 overflow-y-auto">
-          <div className="space-y-6">
-            <div className="pl-4">
-              <h3 className="font-hand text-2xl text-slate-500 mb-4">Quick Stats</h3>
-            </div>
+        {/* Right Sidebar - Notebook Dashboard */}
+        <aside className="hidden lg:flex flex-col w-80 bg-amber-50/30 border-l-2 border-dashed border-amber-300/60 relative pt-24 pb-8 px-5 overflow-y-auto">
+          {/* Notebook lines background */}
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 27px, #d4a574 28px)', backgroundSize: '100% 28px', opacity: 0.15 }} />
+          
+          <div className="relative space-y-6">
             
-            {/* Stats Cards */}
-            <div className="space-y-4">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">Active Tasks</span>
-                  <CheckSquare className="w-4 h-4 text-orange-500" />
-                </div>
-                <div className="text-2xl font-bold text-slate-800">12</div>
-                <div className="text-xs text-green-600">3 completed today</div>
+            {/* Tasks Section */}
+            <div 
+              onClick={() => navigate('/tasks')}
+              className="group cursor-pointer"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <CheckSquare className="w-5 h-5 text-amber-700" />
+                <h4 className="font-hand text-xl text-amber-900">My Tasks</h4>
+                <ArrowRight className="w-4 h-4 text-amber-500 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </div>
-
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">DSA Problems</span>
-                  <Code2 className="w-4 h-4 text-blue-500" />
+              
+              {stats.loadingTasks ? (
+                <div className="flex justify-center py-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
                 </div>
-                <div className="text-2xl font-bold text-slate-800">47</div>
-                <div className="text-xs text-green-600">8 this week</div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">Study Streak</span>
-                  <div className="text-orange-500">🔥</div>
+              ) : (
+                <div className="space-y-1 pl-1">
+                  <p className="font-hand text-slate-700">
+                    <span className="text-2xl font-bold text-amber-800">{stats.activeTasks}</span>
+                    <span className="text-sm ml-1">tasks waiting</span>
+                  </p>
+                  <p className="font-hand text-slate-600 text-sm">
+                    ✓ {stats.completedToday} done today
+                  </p>
+                  {stats.maxStreak > 0 && (
+                    <p className="font-hand text-amber-700 text-sm flex items-center gap-1">
+                      <Flame className="w-4 h-4" />
+                      {stats.maxStreak} day streak!
+                    </p>
+                  )}
                 </div>
-                <div className="text-2xl font-bold text-slate-800">15 days</div>
-                <div className="text-xs text-slate-500">Keep it going!</div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">Upcoming</span>
-                  <CalendarIcon className="w-4 h-4 text-purple-500" />
-                </div>
-                <div className="text-sm font-medium text-slate-800">2 deadlines</div>
-                <div className="text-xs text-red-600">Next: Tomorrow</div>
-              </div>
+              )}
             </div>
 
-            {/* Quick Actions */}
-            <div className="space-y-3 pt-4 border-t border-slate-200">
-              <h4 className="text-sm font-medium text-slate-600">Quick Actions</h4>
-              <Button size="sm" className="w-full justify-start" variant="outline">
-                <Bot className="w-4 h-4 mr-2" />
-                Open AI Assistant
-              </Button>
-              <Button size="sm" className="w-full justify-start" variant="outline">
-                <FileText className="w-4 h-4 mr-2" />
-                New Resume
-              </Button>
-            </div>
+            <div className="border-b border-dashed border-amber-300/50" />
 
-            {/* Motivational Quote */}
-            <div className="mt-auto pt-8">
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl">
-                <p className="text-sm text-purple-800 italic">
-                  "Success is the sum of small efforts repeated day in and day out."
+            {/* Calendar Section */}
+            <div 
+              onClick={() => navigate('/calendar')}
+              className="group cursor-pointer"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <CalendarIcon className="w-5 h-5 text-amber-700" />
+                <h4 className="font-hand text-xl text-amber-900">Upcoming</h4>
+                <ArrowRight className="w-4 h-4 text-amber-500 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </div>
+              
+              {stats.loadingCalendar ? (
+                <div className="flex justify-center py-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+                </div>
+              ) : stats.upcomingEvents.length > 0 ? (
+                <ul className="space-y-2 pl-1">
+                  {stats.upcomingEvents.map((event, idx) => {
+                    const isToday = new Date().toDateString() === event.date.toDateString();
+                    const isTomorrow = new Date(Date.now() + 86400000).toDateString() === event.date.toDateString();
+                    const dayLabel = isToday ? 'today' : isTomorrow ? 'tomorrow' : event.date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+                    
+                    return (
+                      <li key={idx} className="font-hand text-sm text-slate-700">
+                        <span className={`${isToday ? 'text-red-700 font-bold' : isTomorrow ? 'text-amber-800' : ''}`}>
+                          • {event.title}
+                        </span>
+                        <span className={`text-xs ml-1 ${isToday ? 'text-red-600' : 'text-slate-500'}`}>({dayLabel})</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="font-hand text-slate-500 text-sm pl-1 italic">
+                  Nothing this week — add something!
                 </p>
-                <p className="text-xs text-purple-600 mt-2">- Robert Collier</p>
+              )}
+            </div>
+
+            {/* Sticky Note */}
+            <div className="mt-auto pt-6">
+              <div className="p-4 bg-yellow-100 border border-yellow-300/80 rounded shadow-sm -rotate-1 relative">
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-6 h-2.5 bg-yellow-200/90 rounded-sm" />
+                <p className="font-hand text-yellow-900 text-sm leading-relaxed">
+                  "Start where you are. Use what you have. Do what you can."
+                </p>
+                <p className="font-hand text-yellow-700/70 text-xs mt-2 text-right">— Arthur Ashe</p>
               </div>
             </div>
           </div>

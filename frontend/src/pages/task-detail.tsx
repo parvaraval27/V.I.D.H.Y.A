@@ -10,8 +10,7 @@ import {
   CheckCircle2,
   Circle,
   Loader2,
-  Trash2,
-  RotateCw
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -66,17 +65,6 @@ export function TaskDetailPage() {
       navigate('/tasks');
     } catch (error) {
       console.error('Error archiving task:', error);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!task) return;
-    if (!confirm('Delete this task permanently?')) return;
-    try {
-      await taskAPI.deleteTask(task._id);
-      navigate('/tasks');
-    } catch (error) {
-      console.error('Error deleting task:', error);
     }
   };
 
@@ -156,11 +144,18 @@ export function TaskDetailPage() {
                 <Archive className="w-4 h-4 mr-2" />
                 Archive
               </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete}>
+              <Button variant="destructive" size="sm" onClick={async ()=>{
+                if (!confirm('Permanently delete this task? This cannot be undone.')) return;
+                try {
+                  await taskAPI.deleteTask(task._id, { permanent: true });
+                  navigate('/tasks');
+                } catch (e) {
+                  console.error('Permanent delete failed', e);
+                }
+              }}>
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </Button>
-              
             </div>
           </div>
         </div>

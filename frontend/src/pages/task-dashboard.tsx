@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, ArrowLeft, Search, LayoutGrid, Archive, MoreVertical, CheckCircle2, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TaskCard } from '@/components/tasks/TaskCard';
@@ -9,6 +9,12 @@ import ArchivedTasksDialog from '@/components/tasks/ArchivedTasksDialog';
 import { useTasks } from '@/hooks/useTasks';
 import NotebookLayout from '@/components/notebook/NotebookLayout';
 import { taskAPI } from '@/lib/taskApi';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function TaskDashboardPage() {
   const navigate = useNavigate();
@@ -16,20 +22,38 @@ export function TaskDashboardPage() {
   const [creating, setCreating] = useState(false);
   const [marking, setMarking] = useState<string | null>(null);
 
+  // Search and filter
+  // 'search' is the text input (supports #tag syntax)
+  const [search, setSearch] = useState('');
+  const [showCompleted, setShowCompleted] = useState(false);
+
   const { tasks, loading, error, fetchTasks, markComplete } = useTasks();
 
+  // Helper to extract search filters - avoids duplicate code
+  const getSearchFilters = () => {
+    const tags = (search.match(/#\w+/g) || []).map(t => t.replace('#','')).join(',') || undefined;
+    const q = search.replace(/#\w+/g, '').trim() || undefined;
+    return { archive: false, q, tags, completed: showCompleted || undefined };
+  };
+
   useEffect(() => {
-    fetchTasks(false); // Load active tasks
-  }, []);
+    // debounce search to reduce backend calls
+    const handler = setTimeout(() => {
+      fetchTasks(getSearchFilters());
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [search, showCompleted, fetchTasks]);
 
   const handleCreateTask = async (taskData: any) => {
     setCreating(true);
     try {
       await taskAPI.createTask(taskData);
-      await fetchTasks(false);
+      await fetchTasks(getSearchFilters());
       setDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating task:', error);
+      alert(error?.response?.data?.message || 'Failed to create task');
     } finally {
       setCreating(false);
     }
@@ -39,9 +63,10 @@ export function TaskDashboardPage() {
     setMarking(taskId);
     try {
       await markComplete(taskId);
-      await fetchTasks(false); // Refresh to get updated summary
-    } catch (error) {
+      await fetchTasks(getSearchFilters());
+    } catch (error: any) {
       console.error('Error marking task:', error);
+      alert(error?.response?.data?.message || 'Failed to mark task');
     } finally {
       setMarking(null);
     }
@@ -50,39 +75,81 @@ export function TaskDashboardPage() {
   const [archivedOpen, setArchivedOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-full mx-auto">
-        <NotebookLayout
-          title="Daily Tasks"
-          wide
-          beforeTitle={<Button variant="ghost" className="ml-auto" onClick={() => navigate('/') }>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>}
-        >
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Build streaks and track your progress</p>
+    <NotebookLayout
+      title="Daily Tasks"
+      wide
+      beforeTitle={<Button variant="ghost" className="ml-auto" onClick={() => navigate('/') }>
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>}
+    >
+      {/* Toolbar - Notebook Style */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Search Bar - Notebook Themed */}
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-amber-600" />
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => window.location.href = '/tasks/board'} className="flex items-center gap-2">
-                Board
-              </Button>
-              <Button
-                onClick={() => setDialogOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                New Task
-              </Button>
-              <Button onClick={() => setArchivedOpen(true)} className="flex items-center gap-2">
-                Unarchive
-              </Button>
-            </div>
+            <input 
+              placeholder="Search tasks or #tags..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="w-full pl-10 pr-4 py-2.5 font-hand text-lg bg-amber-50 dark:bg-amber-950/30 border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-800 placeholder:text-amber-400 dark:placeholder:text-amber-600 transition-all"
+            />
           </div>
+
+          {/* Tab-style Active/Done Toggle */}
+          <div className="flex items-center bg-amber-100 dark:bg-amber-900/40 rounded-lg p-1 border border-amber-200 dark:border-amber-800">
+            <button
+              onClick={() => setShowCompleted(false)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                !showCompleted 
+                  ? 'bg-white dark:bg-gray-800 text-amber-700 dark:text-amber-300 shadow-sm' 
+                  : 'text-amber-600 dark:text-amber-400 hover:text-amber-800'
+              }`}
+            >
+              <ListTodo className="w-4 h-4" />
+              Active
+            </button>
+            <button
+              onClick={() => setShowCompleted(true)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                showCompleted 
+                  ? 'bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 shadow-sm' 
+                  : 'text-amber-600 dark:text-amber-400 hover:text-amber-800'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Done
+            </button>
+          </div>
+
+          {/* Actions Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all">
+                <MoreVertical className="w-4 h-4" />
+                Actions
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setDialogOpen(true)} className="cursor-pointer">
+                <Plus className="w-4 h-4 mr-2 text-green-600" />
+                New Task
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/tasks/board')} className="cursor-pointer">
+                <LayoutGrid className="w-4 h-4 mr-2 text-blue-600" />
+                Board View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setArchivedOpen(true)} className="cursor-pointer">
+                <Archive className="w-4 h-4 mr-2 text-amber-600" />
+                Unarchive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </div>
 
         {/* Error Alert */}
         {error && (
@@ -144,8 +211,6 @@ export function TaskDashboardPage() {
             ))}
           </div>
         )}
-        </NotebookLayout>
-      </div>
 
       {/* Create Dialog */}
       <CreateTaskDialog
@@ -156,7 +221,7 @@ export function TaskDashboardPage() {
       />
 
       {/* Archived Dialog */}
-      <ArchivedTasksDialog open={archivedOpen} onOpenChange={setArchivedOpen} onRestore={() => fetchTasks(false)} />
-    </div>
+      <ArchivedTasksDialog open={archivedOpen} onOpenChange={setArchivedOpen} onRestore={() => fetchTasks({ archive: false })} />
+    </NotebookLayout>
   );
 }

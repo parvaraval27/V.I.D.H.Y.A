@@ -29,9 +29,17 @@ const generateOccurrences = (reminder, from, to) => {
   const occurrences = [];
   const base = new Date(reminder.occurrenceDate);
   const repeat = reminder.repeat || { kind: 'single', interval: 1 };
+  
+  // Build set of excluded date strings for fast lookup
+  const excludedSet = new Set(
+    (reminder.excludedDates || []).map(d => new Date(d).toISOString().split('T')[0])
+  );
+  const isExcluded = (date) => excludedSet.has(date.toISOString().split('T')[0]);
 
   if (repeat.kind === 'single') {
-    if (base >= from && base <= to && !reminder.archived) occurrences.push(new Date(base));
+    if (base >= from && base <= to && !reminder.archived && !isExcluded(base)) {
+      occurrences.push(new Date(base));
+    }
     return occurrences;
   }
 
@@ -61,7 +69,10 @@ const generateOccurrences = (reminder, from, to) => {
   while (cursor && cursor <= to) {
     if (reminder.archived) break;
     if (repeat.until && cursor > new Date(repeat.until)) break;
-    occurrences.push(new Date(cursor));
+    // Skip excluded dates
+    if (!isExcluded(cursor)) {
+      occurrences.push(new Date(cursor));
+    }
     if (repeat.kind === 'monthly') {
       cursor = addMonths(cursor, repeat.interval);
     } else if (repeat.kind === 'yearly') {
@@ -184,11 +195,25 @@ export const updateReminder = async (req, res) => {
 export const deleteReminder = async (req, res) => {
   try {
     const { id } = req.params;
+    const { occurrenceDate, deleteAll } = req.query; // occurrenceDate to delete single occurrence
+    
     const reminder = await Reminder.findById(id);
     if (!reminder) return res.status(404).json({ message: 'Reminder not found' });
     if (reminder.userId.toString() !== req.user._id.toString()) return res.status(403).json({ message: 'Unauthorized' });
 
-    // soft-delete
+    const isRecurring = reminder.repeat?.kind && reminder.repeat.kind !== 'single';
+    
+    // If deleting single occurrence from recurring series (not deleteAll)
+    if (isRecurring && occurrenceDate && deleteAll !== 'true') {
+      // Add this date to excluded dates
+      const excludeDate = new Date(occurrenceDate);
+      if (!reminder.excludedDates) reminder.excludedDates = [];
+      reminder.excludedDates.push(excludeDate);
+      await reminder.save();
+      return res.json({ message: 'Occurrence removed from series' });
+    }
+
+    // Otherwise, archive the entire reminder (soft-delete)
     reminder.archived = true;
     await reminder.save();
     res.json({ message: 'Reminder archived' });

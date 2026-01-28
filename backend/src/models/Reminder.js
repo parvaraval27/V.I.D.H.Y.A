@@ -15,6 +15,8 @@ const reminderSchema = new mongoose.Schema({
     // optional end date for repeating
     until: { type: Date, default: null }
   },
+  // dates to exclude from recurring series (for single occurrence deletions)
+  excludedDates: [{ type: Date }],
   // optional override color, else color from type will be used
   color: { type: String, default: null },
   archived: { type: Boolean, default: false },

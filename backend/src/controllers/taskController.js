@@ -6,11 +6,17 @@ import TaskSummary from '../models/TaskSummary.js';
 const ALLOWED_COLORS = ['#ff7eb9','#ff65a3','#7afcff','#feff9c','#fff740'];
 const DEFAULT_LABEL_COLOR = '#feff9c';
 
-// Helper function to normalize date to midnight
-const normalizeDateToMidnight = (date, timezone = 'UTC') => {
+// Helper function to normalize date to midnight for a given timezone offset (minutes east of UTC)
+// timezoneOffsetMinutes: integer minutes (e.g., IST = +330), defaults to 0 (UTC)
+const normalizeDateToMidnight = (date, timezoneOffsetMinutes = 0) => {
   const d = new Date(date);
-  d.setUTCHours(0, 0, 0, 0);
-  return d;
+  // Shift by timezone offset to get local wall-clock time anchored at user's zone
+  const shifted = new Date(d.getTime() + timezoneOffsetMinutes * 60000);
+  // zero out the UTC hours on shifted to represent local midnight
+  shifted.setUTCHours(0, 0, 0, 0);
+  // shift back to UTC timestamp representing that local midnight
+  const result = new Date(shifted.getTime() - timezoneOffsetMinutes * 60000);
+  return result;
 };
 
 // Helper to calculate completion rate
@@ -31,7 +37,7 @@ const calculateCompletionRate = async (taskId, startDate) => {
 };
 
 // Helper to compute streak
-const computeStreak = async (taskId, currentDate) => {
+const computeStreak = async (taskId, currentDate, timezoneOffsetMinutes = 0) => {
   let streak = 1;
   let prevDate = new Date(currentDate);
   prevDate.setDate(prevDate.getDate() - 1);
@@ -39,7 +45,7 @@ const computeStreak = async (taskId, currentDate) => {
   while (true) {
     const log = await TaskLog.findOne({
       taskId,
-      date: normalizeDateToMidnight(prevDate)
+      date: normalizeDateToMidnight(prevDate, timezoneOffsetMinutes)
     });
 
     if (!log) break;
@@ -52,8 +58,8 @@ const computeStreak = async (taskId, currentDate) => {
 };
 
 // Simple weekly score: number of completions in the last 7 days
-const computeWeeklyScore = async (taskId, referenceDate = new Date()) => {
-  const end = normalizeDateToMidnight(referenceDate);
+const computeWeeklyScore = async (taskId, referenceDate = new Date(), timezoneOffsetMinutes = 0) => {
+  const end = normalizeDateToMidnight(referenceDate, timezoneOffsetMinutes);
   const start = new Date(end);
   start.setDate(start.getDate() - 6);
   const count = await TaskLog.countDocuments({ taskId, date: { $gte: start, $lte: end } });
@@ -71,7 +77,8 @@ const computeProductivityIndex = (summary) => {
 
 export const getTasks = async (req, res) => {
   try {
-    const { archive, tags, priority, status, sort } = req.query;
+    const { archive, tags, priority, status, sort, q, completed } = req.query;
+    const timezoneOffset = req.query.tz ? parseInt(req.query.tz, 10) : 0; // minutes east of UTC
     const query = { userId: req.user._id };
 
     if (archive !== undefined) {
@@ -100,10 +107,35 @@ export const getTasks = async (req, res) => {
 
     let tasksWithSummary = tasks.map(task => ({ ...task, summary: summaryMap[String(task._id)] || null }));
 
-    // Status filter (simple): 'doneToday' filters tasks with lastCompletedAt today
+    // Text query search
+    if (q) {
+      const qLower = String(q).toLowerCase();
+      tasksWithSummary = tasksWithSummary.filter(t => (t.title && String(t.title).toLowerCase().includes(qLower)) || (t.description && String(t.description).toLowerCase().includes(qLower)) || (t.tags && t.tags.join(' ').toLowerCase().includes(qLower)));
+    }
+
+    // Filter for one-time tasks based on completion status:
+    // - If completed='true' (Done tab): show ONLY completed one-time tasks
+    // - Otherwise (Active tab): hide completed one-time tasks, show recurring + incomplete one-time
+    if (completed === 'true') {
+      // Show only completed one-time tasks
+      tasksWithSummary = tasksWithSummary.filter(t => {
+        const isOnceTask = t.schedule && t.schedule.kind === 'once';
+        const isCompleted = t.summary && t.summary.totalCompletions >= 1;
+        return isOnceTask && isCompleted;
+      });
+    } else {
+      // Exclude completed one-time tasks (keep recurring + incomplete one-time)
+      tasksWithSummary = tasksWithSummary.filter(t => {
+        const isOnceTask = t.schedule && t.schedule.kind === 'once';
+        const isCompleted = t.summary && t.summary.totalCompletions >= 1;
+        return !isOnceTask || !isCompleted;
+      });
+    }
+
+    // Status filter (simple): 'doneToday' filters tasks with lastCompletedAt today (respecting timezone offset)
     if (status === 'doneToday') {
-      const today = normalizeDateToMidnight(new Date());
-      tasksWithSummary = tasksWithSummary.filter(t => t.summary && t.summary.lastCompletedAt && normalizeDateToMidnight(t.summary.lastCompletedAt).getTime() === today.getTime());
+      const today = normalizeDateToMidnight(new Date(), timezoneOffset);
+      tasksWithSummary = tasksWithSummary.filter(t => t.summary && t.summary.lastCompletedAt && normalizeDateToMidnight(t.summary.lastCompletedAt, timezoneOffset).getTime() === today.getTime());
     }
 
     // Sorting options
@@ -125,7 +157,7 @@ export const getTasks = async (req, res) => {
 
 export const createTask = async (req, res) => {
   try {
-    const { title, description, tags, schedule, reminder, target, difficulty, priority, labelColor, startDate, position, width, height, zIndex } = req.body;
+    const { title, description, tags, schedule, target, difficulty, priority, labelColor, startDate, position, width, height, zIndex, deadline, enableStreak } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
@@ -137,13 +169,14 @@ export const createTask = async (req, res) => {
       description,
       tags: tags || [],
       schedule: schedule || { kind: 'daily' },
-      reminder: reminder || { enabled: false },
       target: target || 1,
       difficulty: difficulty || 'medium',
       priority: priority ? String(priority).toLowerCase() : 'medium',
       // Validate labelColor against allowed palette
       labelColor: ALLOWED_COLORS.includes(labelColor) ? labelColor : DEFAULT_LABEL_COLOR,
-      startDate: startDate || new Date()
+      startDate: startDate || new Date(),
+      deadline: deadline || null,
+      enableStreak: enableStreak === undefined ? true : !!enableStreak
     };
 
     // optional layout fields
@@ -182,7 +215,7 @@ export const createTask = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, tags, schedule, reminder, target, difficulty, priority, labelColor, archive } = req.body;
+    const { title, description, tags, schedule, target, difficulty, priority, labelColor, archive, deadline, enableStreak } = req.body;
 
     const task = await Task.findById(id);
     if (!task) {
@@ -197,7 +230,8 @@ export const updateTask = async (req, res) => {
     if (description !== undefined) task.description = description;
     if (tags) task.tags = tags;
     if (schedule) task.schedule = schedule;
-    if (reminder) task.reminder = reminder;
+    if (deadline !== undefined) task.deadline = deadline;
+    if (enableStreak !== undefined) task.enableStreak = !!enableStreak;
     if (target) task.target = target;
     if (difficulty) task.difficulty = difficulty;
     if (priority) task.priority = String(priority).toLowerCase();
@@ -225,6 +259,7 @@ export const updateTask = async (req, res) => {
 export const deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
+    const { permanent } = req.query;
 
     const task = await Task.findById(id);
     if (!task) {
@@ -233,6 +268,14 @@ export const deleteTask = async (req, res) => {
 
     if (task.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    if (String(permanent) === 'true') {
+      // remove task and associated logs & summary
+      await TaskLog.deleteMany({ taskId: id });
+      await TaskSummary.deleteMany({ taskId: id });
+      await task.deleteOne();
+      return res.json({ message: 'Task permanently deleted' });
     }
 
     task.archive = true;
@@ -275,7 +318,25 @@ export const markTaskComplete = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    const logDate = normalizeDateToMidnight(date || new Date());
+    // Consider timezone offset from client (minutes east of UTC) via body or header
+    const tzOffset = (req.body.timezoneOffset || req.headers['x-timezone-offset']) ? parseInt(req.body.timezoneOffset || req.headers['x-timezone-offset'], 10) || 0 : 0;
+
+    const logDate = normalizeDateToMidnight(date || new Date(), tzOffset);
+
+    // Sanity check: don't allow future-dated completion relative to user's timezone
+    const nowNormalized = normalizeDateToMidnight(new Date(), tzOffset);
+    if (logDate.getTime() > nowNormalized.getTime()) {
+      return res.status(400).json({ message: 'Cannot complete tasks in the future' });
+    }
+
+    // Prevent marking a 'once' task more than once
+    if (task.schedule && task.schedule.kind === 'once') {
+      const existingSummary = await TaskSummary.findOne({ taskId: id });
+      if (existingSummary && existingSummary.totalCompletions >= 1) {
+        return res.status(400).json({ message: "Task 'once' is already completed." });
+      }
+    }
+
     let log = await TaskLog.findOne({ taskId: id, date: logDate });
 
     if (log) {
@@ -308,8 +369,8 @@ export const markTaskComplete = async (req, res) => {
       });
     }
 
-    // Compute streak anchored to the most recent completion date
-    const currentStreak = await computeStreak(id, anchorDate);
+    // Compute streak anchored to the most recent completion date if task has streaks enabled
+    const currentStreak = task.enableStreak ? await computeStreak(id, anchorDate, tzOffset) : 0;
     summary.currentStreak = currentStreak;
     summary.maxStreak = Math.max(summary.maxStreak, currentStreak);
     summary.lastCompletedAt = anchorDate;
@@ -318,7 +379,7 @@ export const markTaskComplete = async (req, res) => {
     const totalLogs = await TaskLog.countDocuments({ taskId: id });
     summary.totalCompletions = totalLogs;
     summary.completionRate = await calculateCompletionRate(id, task.startDate);
-    summary.weeklyScore = await computeWeeklyScore(id, anchorDate);
+    summary.weeklyScore = await computeWeeklyScore(id, anchorDate, tzOffset);
     summary.productivityIndex = computeProductivityIndex(summary);
 
     await summary.save();
@@ -348,8 +409,20 @@ export const unmarkTaskComplete = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    const logDate = normalizeDateToMidnight(date || new Date());
-    await TaskLog.deleteOne({ taskId: id, date: logDate });
+    const tzOffset = (req.body.timezoneOffset || req.headers['x-timezone-offset']) ? parseInt(req.body.timezoneOffset || req.headers['x-timezone-offset'], 10) || 0 : 0;
+    const logDate = normalizeDateToMidnight(date || new Date(), tzOffset);
+
+    const log = await TaskLog.findOne({ taskId: id, date: logDate });
+    if (log) {
+      if ((log.count || 1) > 1) {
+        log.count = (log.count || 1) - 1;
+        await log.save();
+      } else {
+        await TaskLog.deleteOne({ _id: log._id });
+      }
+    } else {
+      return res.status(404).json({ message: 'No completion found for that date' });
+    }
 
     let summary = await TaskSummary.findOne({ taskId: id });
     if (!summary) {
@@ -362,8 +435,8 @@ export const unmarkTaskComplete = async (req, res) => {
     const totalLogs = await TaskLog.countDocuments({ taskId: id });
     summary.totalCompletions = totalLogs;
 
-    if (lastLog) {
-      summary.currentStreak = await computeStreak(id, lastLog.date);
+    if (lastLog && task.enableStreak) {
+      summary.currentStreak = await computeStreak(id, lastLog.date, tzOffset);
     } else {
       summary.currentStreak = 0;
     }
