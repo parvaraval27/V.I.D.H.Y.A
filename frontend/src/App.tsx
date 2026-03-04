@@ -14,6 +14,7 @@ import { TaskDetailPage } from '@/pages/task-detail';
 import TaskBoardPage from '@/pages/task-board';
 import CalendarPage from '@/pages/calendar';
 import PersonalSpacePage from './pages/personal-space';
+import ChatBubble from '@/components/assistant/ChatBubble';
 import { ToastProvider } from "@/components/ui/toast"
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ function AppRouter() {
   }
 
   return (
+    <>
     <Routes>
       <Route
         path="/login"
@@ -95,6 +97,8 @@ function AppRouter() {
       />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    {user && <ChatBubble />}
+    </>
   );
 }
 

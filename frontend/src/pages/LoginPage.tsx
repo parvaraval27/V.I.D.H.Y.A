@@ -109,7 +109,7 @@ export default function LoginPage() {
                     
                     {loginError && (
                       <div className="bg-red-50 border-l-4 border-red-500 p-4">
-                        <p className="text-red-700">Invalid email or password. Please try again.</p>
+                        <p className="text-red-700">{loginError}</p>
                       </div>
                     )}
 
@@ -160,7 +160,7 @@ export default function LoginPage() {
                         className="w-full px-4 py-3 rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
                         placeholder="••••••••"
                         required
-                        minLength={8}
+                        minLength={6}
                       />
                     </div>
 

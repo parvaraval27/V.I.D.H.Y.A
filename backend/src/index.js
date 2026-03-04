@@ -7,6 +7,8 @@ import authRoutes from './routes/authRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import reminderRoutes from './routes/reminderRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import assistantRoutes from './routes/assistantRoutes.js';
+import { trainAndGet } from './assistant/nlpEngine.js';
 
 dotenv.config();
 
@@ -25,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -121,6 +124,8 @@ const startServer = async () => {
             useUnifiedTopology: true,
         });
         console.log('Connected to MongoDB');
+
+        await trainAndGet();
         
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);

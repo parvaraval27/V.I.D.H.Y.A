@@ -53,6 +53,9 @@ out/
 # Output of 'npm pack'
 *.tgz
 
+# NLP cached model
+backend/src/assistant/model.nlp
+
 # Misc
 *.pem
 .vercel

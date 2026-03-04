@@ -1,0 +1,304 @@
+{
+  "name": "Vidhya Assistant",
+  "locale": "en-US",
+  "data": [
+    {
+      "intent": "greeting",
+      "utterances": [
+        "hi", "hello", "hey", "hey there", "good morning", "good evening",
+        "what's up", "howdy", "greetings", "yo", "sup"
+      ],
+      "answers": [
+        "Hey! I'm your Vidhya assistant. How can I help you today?",
+        "Hello! What would you like to do?",
+        "Hi there! I can manage your tasks, check your stats, or navigate you around. What do you need?"
+      ]
+    },
+    {
+      "intent": "help",
+      "utterances": [
+        "help", "what can you do", "show commands", "how do I use this",
+        "what are your capabilities", "show me what you can do",
+        "list commands", "help me", "what do you support",
+        "what actions can you perform", "guide me"
+      ],
+      "answers": [
+        "Here's what I can do:\n• **Add a task** — \"Add a task called meditation daily\"\n• **Delete/archive a task** — \"Delete task meditation\"\n• **Mark a task done** — \"Mark meditation as done\"\n• **Unmark a task** — \"Unmark meditation\"\n• **List tasks** — \"Show my tasks\"\n• **Task stats** — \"What's my streak on meditation?\"\n• **My stats** — \"Show my stats\"\n• **Navigate** — \"Go to calendar\", \"Open task board\"\n\nJust type naturally!"
+      ]
+    },
+    {
+      "intent": "thanks",
+      "utterances": [
+        "thanks", "thank you", "thanks a lot", "ty", "appreciate it", "thx"
+      ],
+      "answers": [
+        "You're welcome! Anything else?",
+        "No problem! Let me know if you need anything else.",
+        "Happy to help!"
+      ]
+    },
+
+    {
+      "intent": "task.create",
+      "utterances": [
+        "add a task called %title%",
+        "create a task named %title%",
+        "new task %title%",
+        "add task %title%",
+        "create task %title%",
+        "make a task called %title%",
+        "add a daily task called %title%",
+        "create a task %title% with daily schedule",
+        "add a task named %title% recurring twice a day",
+        "new task %title% hard difficulty",
+        "add task %title% with high priority",
+        "create a weekly task called %title%",
+        "add a monthly task named %title%",
+        "create a once task called %title%",
+        "add task %title% easy difficulty",
+        "create task %title% medium priority",
+        "add a task",
+        "create a new task",
+        "I want to add a task",
+        "make a new task",
+        "add task %title% that repeats %number% times a day",
+        "create task %title% target %number% times",
+        "add task %title% with deadline tomorrow",
+        "new task %title% tagged %tag%",
+        "add a task named %title% with tag %tag%"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "task.update",
+      "utterances": [
+        "update task %title%",
+        "edit task %title%",
+        "rename task %title% to %new_title%",
+        "change task %title% priority to high",
+        "change task %title% priority to low",
+        "change task %title% priority to medium",
+        "set task %title% difficulty to hard",
+        "set task %title% difficulty to easy",
+        "change task %title% to weekly",
+        "change task %title% to daily",
+        "update task %title% schedule to monthly",
+        "change the priority of %title% to high",
+        "make %title% a daily task",
+        "set %title% target to %number%"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "task.delete",
+      "utterances": [
+        "delete task %title%",
+        "remove task %title%",
+        "archive task %title%",
+        "delete %title%",
+        "remove %title%",
+        "get rid of task %title%",
+        "trash task %title%",
+        "I want to delete %title%",
+        "archive %title%",
+        "permanently delete task %title%"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "task.restore",
+      "utterances": [
+        "restore task %title%",
+        "unarchive task %title%",
+        "bring back task %title%",
+        "restore %title%",
+        "unarchive %title%"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "task.mark",
+      "utterances": [
+        "mark %title% as done",
+        "complete %title%",
+        "mark %title% complete",
+        "I finished %title%",
+        "done with %title%",
+        "tick %title%",
+        "mark %title% as completed",
+        "I completed %title%",
+        "check off %title%",
+        "%title% is done",
+        "mark task %title% done",
+        "mark %title% done for today",
+        "complete task %title%"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "task.unmark",
+      "utterances": [
+        "unmark %title%",
+        "undo %title%",
+        "uncheck %title%",
+        "undo completion of %title%",
+        "unmark task %title%",
+        "I didn't actually do %title%",
+        "remove completion for %title%"
+      ],
+      "answers": []
+    },
+
+    {
+      "intent": "task.list",
+      "utterances": [
+        "show my tasks",
+        "list my tasks",
+        "what tasks do I have",
+        "list tasks",
+        "show tasks",
+        "what are my tasks",
+        "show all tasks",
+        "what do I need to do",
+        "show today's tasks",
+        "list today's tasks",
+        "what's on my plate",
+        "show active tasks",
+        "my tasks"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "task.query",
+      "utterances": [
+        "what's my streak on %title%",
+        "show stats for %title%",
+        "how am I doing on %title%",
+        "tell me about task %title%",
+        "stats for %title%",
+        "how is %title% going",
+        "what's my progress on %title%",
+        "show me %title% details",
+        "completion rate for %title%",
+        "%title% streak"
+      ],
+      "answers": []
+    },
+
+    {
+      "intent": "profile.stats",
+      "utterances": [
+        "show my stats",
+        "what are my stats",
+        "my statistics",
+        "show my productivity",
+        "what's my productivity",
+        "how am I doing",
+        "how many tasks have I completed",
+        "show my progress",
+        "my overall stats",
+        "productivity stats",
+        "show my performance",
+        "how productive am I"
+      ],
+      "answers": []
+    },
+
+    {
+      "intent": "navigate.tasks",
+      "utterances": [
+        "go to tasks",
+        "open tasks",
+        "show task dashboard",
+        "take me to tasks",
+        "navigate to tasks",
+        "open task dashboard",
+        "go to task page"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "navigate.board",
+      "utterances": [
+        "go to board",
+        "open board",
+        "show task board",
+        "open sticky board",
+        "take me to task board",
+        "navigate to board",
+        "go to task board"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "navigate.calendar",
+      "utterances": [
+        "go to calendar",
+        "open calendar",
+        "show calendar",
+        "take me to calendar",
+        "navigate to calendar"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "navigate.profile",
+      "utterances": [
+        "go to profile",
+        "open profile",
+        "show my profile",
+        "take me to profile",
+        "navigate to profile",
+        "open my profile",
+        "go to personal space"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "navigate.dsa",
+      "utterances": [
+        "go to dsa",
+        "open dsa helper",
+        "show dsa page",
+        "take me to dsa",
+        "navigate to dsa",
+        "open dsa"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "navigate.career",
+      "utterances": [
+        "go to career",
+        "open career canvas",
+        "show career page",
+        "take me to career",
+        "navigate to career"
+      ],
+      "answers": []
+    },
+    {
+      "intent": "navigate.home",
+      "utterances": [
+        "go to home",
+        "go home",
+        "take me home",
+        "open home",
+        "navigate to home",
+        "go to dashboard"
+      ],
+      "answers": []
+    }
+  ],
+  "entities": {
+    "title": {
+      "options": {}
+    },
+    "new_title": {
+      "options": {}
+    },
+    "tag": {
+      "options": {}
+    }
+  }
+}
