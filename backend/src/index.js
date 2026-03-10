@@ -9,6 +9,7 @@ import reminderRoutes from './routes/reminderRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
 import { trainAndGet } from './assistant/nlpEngine.js';
+import { globalLimiter, assistantLimiter } from './middleware/rateLimiter.js';
 
 dotenv.config();
 
@@ -33,12 +34,15 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Rate limiting
+app.use('/api', globalLimiter);
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/assistant', assistantRoutes);
+app.use('/api/assistant', assistantLimiter, assistantRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

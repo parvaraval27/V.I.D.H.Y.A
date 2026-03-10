@@ -112,7 +112,10 @@ const handlers = {
     if (slots.target_number) updates.target = parseInt(slots.target_number, 10) || task.target;
 
     if (Object.keys(updates).length === 0) {
-      return { message: `What do you want to change about **${task.title}**? (e.g. priority, difficulty, schedule)` };
+      return {
+        message: `What do you want to change about **${task.title}**? (e.g. priority, difficulty, schedule)`,
+        pending: true,
+      };
     }
 
     await Task.findByIdAndUpdate(task._id, { $set: updates });

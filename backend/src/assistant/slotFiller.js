@@ -88,6 +88,38 @@ function fillSlots(nlpResult, context, rawText) {
     const intent = context.pendingIntent;
     const slotKey = context.missingSlot;
 
+    // _update_fields means we're collecting update details
+    // for an already-identified task. Merge entities + parse raw text.
+    if (slotKey === '_update_fields') {
+      // Merge any NLP-extracted entities
+      Object.assign(context.filledSlots, nlpResult.entities);
+
+      // Try to parse common patterns from raw text if NLP missed them
+      if (!context.filledSlots.schedule_kind) {
+        const schedMatch = rawText.match(/\b(daily|weekly|monthly|once)\b/i);
+        if (schedMatch) context.filledSlots.schedule_kind = schedMatch[1].toLowerCase();
+      }
+      if (!context.filledSlots.target_number) {
+        const targetMatch = rawText.match(/(\d+)\s*(?:x|times?)/i);
+        if (targetMatch) context.filledSlots.target_number = targetMatch[1];
+      }
+      if (!context.filledSlots.priority) {
+        const prioMatch = rawText.match(/\b(low|medium|high|urgent)\b/i);
+        if (prioMatch) context.filledSlots.priority = prioMatch[1].toLowerCase();
+      }
+      if (!context.filledSlots.difficulty) {
+        const diffMatch = rawText.match(/\b(easy|medium|hard)\b/i);
+        if (diffMatch) context.filledSlots.difficulty = diffMatch[1].toLowerCase();
+      }
+
+      const slots = { ...context.filledSlots };
+      context.pendingIntent = null;
+      context.missingSlot = null;
+      context.filledSlots = {};
+      context.lastIntent = intent;
+      return { ready: true, intent, slots };
+    }
+
     // The user's raw text IS the slot value (e.g. they typed a task name)
     // But also check if NLP found a relevant entity
     const entityValue = nlpResult.entities[slotKey] || null;

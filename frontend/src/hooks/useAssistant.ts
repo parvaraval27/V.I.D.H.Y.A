@@ -2,6 +2,9 @@ import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assistantAPI, Message, AssistantResponse } from '@/lib/assistantApi';
 
+const RATE_LIMIT_MSG = "You're sending messages too fast. Please wait a moment and try again.";
+const LLM_LIMIT_MSG = 'You\'ve reached your daily AI limit. Basic commands still work!';
+
 export function useAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
@@ -57,9 +60,14 @@ export function useAssistant() {
         setTimeout(() => navigate(res.action!.path!), 500);
       }
     } catch (err: any) {
+      const status = err?.response?.status;
+      let errorText = err?.response?.data?.message || 'Something went wrong. Please try again.';
+      if (status === 429) {
+        errorText = RATE_LIMIT_MSG;
+      }
       const errMsg: Message = {
         role: 'assistant',
-        text: err?.response?.data?.message || 'Something went wrong. Please try again.',
+        text: errorText,
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errMsg]);

@@ -84,6 +84,12 @@ const userSchema = new mongoose.Schema({
     preferences: {
         theme: { type: String, enum: ['light', 'dark', 'system'], default: 'light' },
         notificationsEnabled: { type: Boolean, default: true }
+    },
+
+    // Assistant Usage Tracking (LLM budget)
+    assistantUsage: {
+        llmCallsToday: { type: Number, default: 0 },
+        llmLastReset: { type: Date, default: Date.now }
     }
 }, {
     timestamps: true

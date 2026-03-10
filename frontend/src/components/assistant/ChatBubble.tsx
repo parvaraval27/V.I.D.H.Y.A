@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bot, X, Send, RotateCw, Sparkles } from 'lucide-react';
+import { Bot, X, Send, RotateCw, Sparkles, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useAssistant } from '@/hooks/useAssistant';
+import { useVoice } from '@/hooks/useVoice';
 
 export default function ChatBubble() {
   const [open, setOpen] = useState(false);
@@ -18,6 +19,37 @@ export default function ChatBubble() {
     resetConversation,
   } = useAssistant();
 
+  const {
+    isListening,
+    transcript,
+    isSpeaking,
+    isSupported: voiceSupported,
+    autoSpeak,
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
+    toggleAutoSpeak,
+  } = useVoice();
+
+  // Update input field with voice transcript
+  useEffect(() => {
+    if (transcript) setInput(transcript);
+  }, [transcript]);
+
+  // Auto-speak assistant responses
+  const prevMsgCountRef = useRef(0);
+  useEffect(() => {
+    if (!autoSpeak || messages.length === 0) return;
+    if (messages.length > prevMsgCountRef.current) {
+      const last = messages[messages.length - 1];
+      if (last.role === 'assistant') {
+        speak(last.text);
+      }
+    }
+    prevMsgCountRef.current = messages.length;
+  }, [messages, autoSpeak, speak]);
+
   // Useeffect to load the history and suggestions when the panel is opened
   useEffect(() => {
     if (open) {
@@ -31,6 +63,13 @@ export default function ChatBubble() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sending]);
+
+  // Re-focus input after assistant replies
+  useEffect(() => {
+    if (!sending && open) {
+      inputRef.current?.focus();
+    }
+  }, [sending, open]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() || sending) return;
@@ -87,6 +126,15 @@ export default function ChatBubble() {
           <div className="flex items-center gap-3 px-4 py-3 bg-purple-600 text-white rounded-t-2xl shrink-0">
             <Bot className="w-5 h-5" />
             <span className="font-semibold text-sm flex-1">V.I.D.H.Y.A. A.I.</span>
+            {voiceSupported && (
+              <button
+                onClick={toggleAutoSpeak}
+                className="p-1 hover:bg-purple-500 rounded transition-colors"
+                title={autoSpeak ? 'Mute voice' : 'Unmute voice'}
+              >
+                {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
+            )}
             <button
               onClick={handleReset}
               className="p-1 hover:bg-purple-500 rounded transition-colors"
@@ -165,10 +213,40 @@ export default function ChatBubble() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a command..."
+                placeholder={isListening ? 'Listening...' : 'Type a command...'}
                 disabled={sending}
                 className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
               />
+              {voiceSupported && (
+                <button
+                  onClick={() => {
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      if (isSpeaking) stopSpeaking();
+                      startListening((text) => {
+                        setInput(text);
+                        // Auto-send after voice input
+                        setTimeout(() => {
+                          if (text.trim()) {
+                            sendMessage(text.trim());
+                            setInput('');
+                          }
+                        }, 300);
+                      });
+                    }
+                  }}
+                  disabled={sending}
+                  className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
+                    isListening
+                      ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                      : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300'
+                  } disabled:opacity-40`}
+                  title={isListening ? 'Stop listening' : 'Voice input'}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              )}
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || sending}

@@ -1,8 +1,14 @@
 // Assistant controller handles chat messages, conversation history, suggestions and resets.
 import Conversation from '../models/Conversation.js';
+import User from '../models/User.js';
+import Task from '../models/Task.js';
 import { processMessage, isReady } from '../assistant/nlpEngine.js';
 import { fillSlots, createContext } from '../assistant/slotFiller.js';
 import { executeAction } from '../assistant/actionExecutor.js';
+import { llmFallback, isLLMAvailable } from '../assistant/llmFallback.js';
+
+const LLM_DAILY_LIMIT = 20;
+const NLP_CONFIDENCE_THRESHOLD = 0.7;
 
 /**
  * POST /api/assistant/message
@@ -40,6 +46,75 @@ export const handleMessage = async (req, res) => {
     // Run NLP
     const nlpResult = await processMessage(rawText);
 
+    // --- LLM Fallback Logic ---
+    let usedLLM = false;
+    let llmCallsRemaining = LLM_DAILY_LIMIT;
+
+    // Intents where nlp.js extracted a meaningful entity (title, etc.) — trust those.
+    // For "soft" intents (help, greeting, thanks, profile.stats, navigate.*) that
+    // have no required entities, nlp.js often overfits on vague user messages.
+    // Route those to LLM when the message doesn't match expected patterns.
+    const TRUSTED_INTENTS = ['task.create', 'task.update', 'task.delete', 'task.restore',
+      'task.mark', 'task.unmark', 'task.query', 'task.list'];
+
+    const hasEntities = nlpResult.entities && Object.keys(nlpResult.entities).length > 0;
+    const isTrustedIntent = TRUSTED_INTENTS.includes(nlpResult.intent) && hasEntities;
+
+    // Simple keyword checks for soft intents
+    const SOFT_INTENT_KEYWORDS = {
+      'help': /\b(help|what can you do|commands?)\b/i,
+      'greeting': /\b(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|sup)\b/i,
+      'thanks': /\b(thanks?|thank\s*you|thx|ty|cheers)\b/i,
+      'profile.stats': /\b(stats?|streak|progress|score|how.*doing|summary)\b/i,
+    };
+    const softKeywordPattern = SOFT_INTENT_KEYWORDS[nlpResult.intent];
+    const softIntentMatchesKeywords = softKeywordPattern && softKeywordPattern.test(rawText);
+
+    const isLikelyMisclassified = !isTrustedIntent
+      && nlpResult.intent !== 'None'
+      && !softIntentMatchesKeywords;
+
+    const needsLLM = (nlpResult.intent === 'None' || nlpResult.score < NLP_CONFIDENCE_THRESHOLD || isLikelyMisclassified)
+      && !context.pendingIntent; // don't override active slot-filling
+
+    if (needsLLM && isLLMAvailable()) {
+      // Check user's daily LLM budget
+      const user = await User.findById(userId);
+      if (user) {
+        const now = new Date();
+        const lastReset = user.assistantUsage?.llmLastReset || new Date(0);
+        if (now.toDateString() !== lastReset.toDateString()) {
+          user.assistantUsage = { llmCallsToday: 0, llmLastReset: now };
+        }
+
+        llmCallsRemaining = LLM_DAILY_LIMIT - (user.assistantUsage.llmCallsToday || 0);
+
+        if (llmCallsRemaining > 0) {
+          // Fetch user's task titles for context
+          const tasks = await Task.find({ userId, archive: false }).select('title').lean();
+          const taskTitles = tasks.map(t => t.title);
+
+          const llmResult = await llmFallback(rawText, taskTitles);
+          if (llmResult && llmResult.intent !== 'None') {
+            // Override NLP result with LLM result
+            nlpResult.intent = llmResult.intent;
+            nlpResult.score = 0.85; // synthetic confidence for downstream logic
+            nlpResult.answer = llmResult.message || nlpResult.answer;
+            // Merge LLM-extracted slots into entities
+            if (llmResult.slots) {
+              Object.assign(nlpResult.entities, llmResult.slots);
+            }
+            usedLLM = true;
+          }
+
+          // Decrement budget
+          user.assistantUsage.llmCallsToday = (user.assistantUsage.llmCallsToday || 0) + 1;
+          await user.save();
+          llmCallsRemaining = LLM_DAILY_LIMIT - user.assistantUsage.llmCallsToday;
+        }
+      }
+    }
+
     // Slot filling
     const slotResult = fillSlots(nlpResult, context, rawText);
 
@@ -59,6 +134,14 @@ export const handleMessage = async (req, res) => {
         responseMessage = actionResult.message;
         responseAction = actionResult.action || null;
         responseData = actionResult.data || null;
+
+        // If the action needs a follow-up (e.g. task.update with no changes specified),
+        // keep the context alive so the next message fills in the details.
+        if (actionResult.pending) {
+          context.pendingIntent = slotResult.intent;
+          context.filledSlots = { ...slotResult.slots };
+          context.missingSlot = '_update_fields';
+        }
       }
     } else {
       // Follow up as we need more info now
@@ -91,6 +174,8 @@ export const handleMessage = async (req, res) => {
       data: responseData,
       intent: slotResult.intent,
       confidence: nlpResult.score,
+      usedLLM,
+      llmCallsRemaining,
     });
   } catch (err) {
     console.error('[Assistant] handleMessage error:', err);

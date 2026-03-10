@@ -24,6 +24,8 @@ export interface AssistantResponse {
   data?: any;
   intent?: string;
   confidence?: number;
+  usedLLM?: boolean;
+  llmCallsRemaining?: number;
 }
 
 export const assistantAPI = {
