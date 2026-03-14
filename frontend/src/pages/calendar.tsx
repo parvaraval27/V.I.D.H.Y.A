@@ -184,9 +184,10 @@ export default function CalendarPage() {
           try {
             const cf = await getCodeforcesContests();
             if (cf && cf.status === 'OK') {
-              const fromTS = Math.floor(from.getTime() / 1000);
+              const weekAgoTS = Math.floor((from.getTime() - 7 * 24 * 60 * 60 * 1000) / 1000);
+              const fromTS = Math.min(Math.floor(from.getTime() / 1000), weekAgoTS);
               const toTS = Math.floor(to.getTime() / 1000);
-              const upcoming = cf.result.filter((c:any) => c.phase === 'BEFORE' && c.startTimeSeconds && c.startTimeSeconds >= fromTS && c.startTimeSeconds <= toTS);
+              const upcoming = cf.result.filter((c:any) => c.startTimeSeconds && c.startTimeSeconds >= fromTS && c.startTimeSeconds <= toTS);
               const mapped = upcoming.map((c:any) => ({
                 title: c.name,
                 occurrenceDate: new Date(c.startTimeSeconds * 1000).toISOString(),
@@ -213,7 +214,8 @@ export default function CalendarPage() {
             const lcRes = await getLeetCodeContests();
             // Response: { count, contests: [ { title, titleSlug, startTime, duration, ... } ] }
             if (lcRes && Array.isArray(lcRes.contests)) {
-              const fromTS = Math.floor(from.getTime() / 1000);
+              const weekAgoTS = Math.floor((from.getTime() - 7 * 24 * 60 * 60 * 1000) / 1000);
+              const fromTS = Math.min(Math.floor(from.getTime() / 1000), weekAgoTS);
               const toTS = Math.floor(to.getTime() / 1000);
               const upcoming = lcRes.contests.filter((c:any) => c.startTime && c.startTime >= fromTS && c.startTime <= toTS);
               const mapped = upcoming.map((c:any) => ({
@@ -243,7 +245,8 @@ export default function CalendarPage() {
             console.log('AtCoder API response:', acRes);
             // Response: [ { name, url, start_time (ISO), end_time, duration (seconds string), site, status } ]
             if (acRes && Array.isArray(acRes) && acRes.length > 0) {
-              const fromTS = Math.floor(from.getTime() / 1000);
+              const weekAgoTS = Math.floor((from.getTime() - 7 * 24 * 60 * 60 * 1000) / 1000);
+              const fromTS = Math.min(Math.floor(from.getTime() / 1000), weekAgoTS);
               const toTS = Math.floor(to.getTime() / 1000);
               console.log('AtCoder date range:', { from: from.toISOString(), to: to.toISOString(), fromTS, toTS });
               const upcoming = acRes.filter((c:any) => {
@@ -334,7 +337,13 @@ export default function CalendarPage() {
     const d = new Date(Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() + 1, 1));
     setCurrentMonth(d);
   };
-  const goToday = () => setCurrentMonth(startOfMonth(new Date()));
+  const goToday = () => {
+    const today = new Date();
+    setCurrentMonth(startOfMonth(today));
+    const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+    setActiveDay(todayUTC);
+    setSelectedDate(todayUTC);
+  };
 
   const monthLabel = `${currentMonth.toLocaleString('default', { month: 'long', timeZone: 'UTC' })} ${currentMonth.getUTCFullYear()}`;
 
@@ -642,11 +651,11 @@ export default function CalendarPage() {
 
       {/* Day Details Popup */}
       <Dialog open={dayPopupOpen} onOpenChange={setDayPopupOpen}>
-        <DialogContent className="day-popup-content border-2 border-dashed border-purple-200 bg-purple-50/30">
+        <DialogContent className="day-popup-content border-2 border-dashed border-purple-200 bg-purple-50/100">
           <DialogHeader>
             <DialogTitle className="font-hand text-xl text-purple-800">Events on {activeDay ? activeDay.toLocaleDateString() : ''}</DialogTitle>
             <div>
-              <button aria-label="Add reminder for this day" onClick={()=>{ setDayPopupOpen(false); if (activeDay) openAddDialog(activeDay); }} className="absolute right-12 top-4 w-8 h-8 rounded-lg bg-purple-100 border border-purple-200 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"><Plus className="w-4 h-4" /></button>
+              <button aria-label="Add reminder for this day" onClick={()=>{ setDayPopupOpen(false); if (activeDay) openAddDialog(activeDay); }} className="absolute right-14 top-4 w-8 h-8 rounded-lg bg-purple-100 border border-purple-200 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"><Plus className="w-4 h-4" /></button>
               <button aria-label="Close day popup" onClick={()=>setDayPopupOpen(false)} className="absolute right-4 top-4 w-8 h-8 rounded-lg bg-white border border-purple-200 text-purple-600 flex items-center justify-center hover:bg-purple-50 transition-colors"><X className="w-4 h-4" /></button>
             </div>
           </DialogHeader>

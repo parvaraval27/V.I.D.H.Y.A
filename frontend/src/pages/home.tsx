@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Flame,
-  Loader2
+  Loader2,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -210,14 +211,18 @@ export default function Home() {
             <img src="/Logo2.png" alt="V.I.D.H.Y.A" className="h-6 w-auto" />
             <div className="h-4 w-[1px] bg-border mx-1"></div>
             <span className="text-sm text-slate-600 hidden sm:inline">{user?.username || user?.email}</span>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="rounded-full"
-              onClick={logout}
-            >
-              Logout
-            </Button>
+            <div className="relative group">
+              <button
+                onClick={logout}
+                className="w-9 h-9 rounded-full flex items-center justify-center border-2 border-red-200 text-red-400 hover:bg-red-50 hover:border-red-400 hover:text-red-600 transition-colors"
+                aria-label="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+              <span className="pointer-events-none absolute right-0 top-full mt-1.5 whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                Logout
+              </span>
+            </div>
           </motion.div>
         </div>
 
@@ -373,15 +378,7 @@ export default function Home() {
                   data-testid="button-see-features"
                 >
                   Explore Features <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="rounded-full border-2 border-slate-200 hover:border-primary/50 hover:bg-primary/5 px-8 h-14 text-lg"
-                  onClick={logout}
-                >
-                  Logout
-                </Button>
+                </Button>                
               </div>
             </motion.div>
           </section>
