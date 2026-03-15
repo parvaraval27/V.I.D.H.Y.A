@@ -284,9 +284,9 @@ export default function PersonalSpace() {
       >
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <h1 className="font-hand text-4xl text-slate-800 mb-2">Personal Space</h1>
+              <h1 className="font-hand text-3xl sm:text-4xl text-slate-800 mb-2">Personal Space</h1>
             </div>
           </div>
         </div>
@@ -385,7 +385,7 @@ export default function PersonalSpace() {
                   <span className="font-hand text-2xl text-amber-600 font-bold">{stats.productivityScore}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 text-center">
                     <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
                     <p className="font-hand text-2xl text-slate-800">{stats.bestStreak}</p>
@@ -524,7 +524,7 @@ export default function PersonalSpace() {
               </div>
 
               {editSection === 'academic' ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="font-hand text-sm text-slate-600">Institution / University</label>
                     <Input 
@@ -563,7 +563,7 @@ export default function PersonalSpace() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="font-hand text-xs text-slate-500">Institution</p>
                     <p className="font-hand text-base text-slate-800">{academic.institution || '—'}</p>
@@ -640,7 +640,7 @@ export default function PersonalSpace() {
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="font-hand text-sm text-slate-600">Short-term Goals</label>
                       <Textarea 
@@ -679,7 +679,7 @@ export default function PersonalSpace() {
                       </div>
                     </div>
                   )}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="font-hand text-xs text-slate-500">Short-term</p>
                       <p className="font-hand text-sm text-slate-700">{career.shortTermGoals || '—'}</p>
@@ -716,7 +716,7 @@ export default function PersonalSpace() {
               </div>
 
               {editSection === 'codingProfiles' ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="font-hand text-sm text-slate-600">LeetCode</label>
                     <Input 
@@ -773,7 +773,7 @@ export default function PersonalSpace() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {codingProfiles.leetcode && (
                     <a href={`https://leetcode.com/u/${codingProfiles.leetcode}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors">
                       <span className="text-lg">🧡</span>
@@ -1016,7 +1016,7 @@ export default function PersonalSpace() {
                 <div className="space-y-4">
                   <div>
                     <label className="font-hand text-sm text-slate-600 mb-2 block">Preferred Study Time</label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                       {STUDY_TIMES.map(time => (
                         <button
                           key={time.value}

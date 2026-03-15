@@ -78,7 +78,7 @@ function DsaHelperPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-white relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-white relative overflow-x-hidden">
         
         <div
           className="absolute inset-0 opacity-20"
@@ -91,7 +91,7 @@ function DsaHelperPage() {
           }}
         />
 
-        <div className="absolute left-8 top-0 bottom-0 flex flex-col justify-around py-16 z-20">
+        <div className="absolute left-8 top-0 bottom-0 hidden lg:flex flex-col justify-around py-16 z-20">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="relative">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 shadow-lg border-4 border-gray-600" />
@@ -100,14 +100,14 @@ function DsaHelperPage() {
           ))}
         </div>
 
-        <div className="absolute left-28 top-0 bottom-0 w-1 bg-gradient-to-b from-red-400 via-red-300 to-red-400 shadow-sm z-20" />
+        <div className="absolute left-28 top-0 bottom-0 w-1 bg-gradient-to-b from-red-400 via-red-300 to-red-400 shadow-sm z-20 hidden lg:block" />
 
         <div
-          className="absolute top-0 right-40 w-16 h-64 bg-gradient-to-b from-purple-600 to-purple-700 shadow-xl z-30"
+          className="absolute top-0 right-40 w-16 h-64 bg-gradient-to-b from-purple-600 to-purple-700 shadow-xl z-30 hidden md:block"
           style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)' }}
         />
 
-        <div className="absolute top-0 right-0 w-32 h-32 z-30">
+        <div className="absolute top-0 right-0 w-32 h-32 z-30 hidden md:block">
           <div
             className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-gray-300 to-gray-100 shadow-2xl"
             style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 0)', transform: 'rotateZ(0deg)' }}
@@ -118,36 +118,36 @@ function DsaHelperPage() {
           />
         </div>
 
-<div className="relative mx-8 pt-12 pb-16 flex justify-center">
+<div className="relative mx-2 sm:mx-4 md:mx-8 pt-8 sm:pt-12 pb-12 sm:pb-16 flex justify-center">
         
           <div className="flex-1 max-w-4xl">
             <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-3xl shadow-2xl border-4 border-purple-300 overflow-hidden" style={{ boxShadow: '0 20px 60px rgba(126, 34, 206, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6)' }}>
               <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E")`, backgroundRepeat: 'repeat', backgroundSize: '200px 200px' }} />
 
-              <div className="relative p-8 pb-6 border-b-2 border-dashed border-purple-200">
+              <div className="relative p-4 sm:p-8 pb-6 border-b-2 border-dashed border-purple-200">
                 <div className="inline-block relative">
                   <div className="absolute inset-0 bg-yellow-200 transform -skew-x-12 opacity-40" />
-                  <h2 className="text-4xl text-purple-900 relative px-4" style={{ fontFamily: 'Georgia, serif' }}>{overviewSection.title}</h2>
+                  <h2 className="text-3xl sm:text-4xl text-purple-900 relative px-4" style={{ fontFamily: 'Georgia, serif' }}>{overviewSection.title}</h2>
                 </div>
-                <div className="absolute top-4 right-6">
+                <div className="mt-3 sm:mt-0 sm:absolute sm:top-4 sm:right-6">
                   <Button variant="ghost" size="sm" onClick={() => window.history.back()} className="text-purple-600 border-2 border-transparent hover:border-purple-300 hover:bg-purple-50">
                     ← Back
                   </Button>
                 </div>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-4 sm:p-8 space-y-6">
                 <div className="bg-purple-50/50 border-l-8 border-purple-600 rounded-r-xl p-6 shadow-inner">
-                  <p className="text-gray-800 leading-relaxed" style={{ fontFamily: 'Georgia, serif' }}>{overviewSection.description}</p>
+                  <p className="text-sm sm:text-base text-gray-800 leading-relaxed" style={{ fontFamily: 'Georgia, serif' }}>{overviewSection.description}</p>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                    <Button onClick={openEmbed} className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-8 py-6 text-lg rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+                    <Button onClick={openEmbed} className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-8 py-6 text-base sm:text-lg rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
                       <Code2 className="w-5 h-5 mr-2" />
                       Launch Here
                     </Button>
 
-                    <Button variant="outline" onClick={() => window.open(embedUrl, '_blank')} className="border-3 border-purple-600 text-purple-700 hover:bg-purple-50 px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all">
+                    <Button variant="outline" onClick={() => window.open(embedUrl, '_blank')} className="border-3 border-purple-600 text-purple-700 hover:bg-purple-50 px-8 py-6 text-base sm:text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all">
                       <ExternalLink className="w-5 h-5 mr-2" />
                       Open in New Tab
                     </Button>
@@ -161,7 +161,7 @@ function DsaHelperPage() {
                             <TrendingUp className="w-5 h-5 text-white" />
                           </div>
                           <h3 className="text-purple-900 mb-2">Track Progress</h3>
-                          <p className="text-sm text-gray-600">Monitor rating changes and problem-solving patterns</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Monitor rating changes and problem-solving patterns</p>
                         </div>
                       </div>
 
@@ -172,7 +172,7 @@ function DsaHelperPage() {
                             <Tag className="w-5 h-5 text-white" />
                           </div>
                           <h3 className="text-blue-900 mb-2">Topic Analysis</h3>
-                          <p className="text-sm text-gray-600">Identify strengths and weaknesses by problem tags</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Identify strengths and weaknesses by problem tags</p>
                         </div>
                       </div>
 
@@ -183,7 +183,7 @@ function DsaHelperPage() {
                             <Clock className="w-5 h-5 text-white" />
                           </div>
                           <h3 className="text-green-900 mb-2">Peak Performance</h3>
-                          <p className="text-sm text-gray-600">Find your most productive coding hours</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Find your most productive coding hours</p>
                         </div>
                       </div>
 
@@ -194,7 +194,7 @@ function DsaHelperPage() {
                             <Users className="w-5 h-5 text-white" />
                           </div>
                           <h3 className="text-amber-900 mb-2">Friend Compare</h3>
-                          <p className="text-sm text-gray-600">Compete and compare with your coding buddies</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Compete and compare with your coding buddies</p>
                         </div>
                       </div>
                 </div>
@@ -205,12 +205,12 @@ function DsaHelperPage() {
               </div>
 
               <div className="px-8 py-4 border-t-2 border-purple-200 bg-purple-50/50 flex justify-between items-center">
-                <div className="text-sm text-gray-500">V.I.D.H.Y.A • Codeforces Module</div>
-                <div className="text-sm text-gray-500" style={{ fontFamily: 'Georgia, serif' }}>Page 1</div>
+                <div className="text-xs sm:text-sm text-gray-500">V.I.D.H.Y.A • Codeforces Module</div>
+                <div className="text-xs sm:text-sm text-gray-500" style={{ fontFamily: 'Georgia, serif' }}>Page 1</div>
               </div>
             </div>
 
-            <div className="mt-8 flex gap-4 justify-end mr-10">
+            <div className="mt-8 hidden lg:flex gap-4 justify-end mr-10">
               <div className="bg-yellow-100 p-5 shadow-xl transform rotate-2 border-b-4 border-yellow-400 rounded-sm max-w-xs mr-10">
                 <p className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'cursive' }}>
                   <strong>Quick Tip:</strong>
@@ -238,14 +238,14 @@ function DsaHelperPage() {
       )}
 
       <Dialog open={isEmbedOpen} onOpenChange={(open) => { if (!open) handleModalClose(); else setIsEmbedOpen(true); }}>
-        <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-7xl h-[88vh] p-0 overflow-hidden">
           <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b-2 border-purple-300 bg-gradient-to-r from-purple-50 to-purple-100">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b-2 border-purple-300 bg-gradient-to-r from-purple-50 to-purple-100">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <Code2 className="w-6 h-6 text-purple-700" />
-                <h3 className="text-2xl text-purple-800" style={{ fontFamily: 'Georgia, serif' }}>DSA Helper - Codeforces Metrics</h3>
+                <h3 className="text-base sm:text-2xl text-purple-800 truncate" style={{ fontFamily: 'Georgia, serif' }}>DSA Helper - Codeforces Metrics</h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Button variant="ghost" size="sm" onClick={() => window.open(embedUrl, '_blank')} className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 border-2 border-transparent hover:border-purple-300">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Open in new tab

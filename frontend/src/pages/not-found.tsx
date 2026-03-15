@@ -22,19 +22,19 @@ export default function NotFound() {
         ))}
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-8">
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-8">
         <div className="max-w-6xl w-full mx-auto">
           <div className="text-center mb-12">
             {/* Chapter Title */}
-            <div className="inline-block px-6 py-2 bg-amber-100 border-2 border-amber-300 rounded-full mb-6">
-              <span className="text-amber-800 font-serif text-lg">Chapter 404</span>
+            <div className="inline-block px-5 sm:px-6 py-2 bg-amber-100 border-2 border-amber-300 rounded-full mb-6">
+              <span className="text-amber-800 font-serif text-base sm:text-lg">Chapter 404</span>
             </div>
             
             <h1 className="text-6xl md:text-8xl font-serif text-amber-900 mb-6">
               Page Not Found
             </h1>
             
-            <p className="text-xl md:text-2xl text-amber-700 font-serif italic max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl md:text-2xl text-amber-700 font-serif italic max-w-2xl mx-auto">
               "Every story must come to an end, but this chapter was never written."
             </p>
           </div>
@@ -61,7 +61,7 @@ export default function NotFound() {
                 {/* Cover Title */}
                 <div className="text-center text-white">
                   <h2 className="text-2xl font-serif mb-2">'हे पार्थ, तुम भटक गए हो'</h2>
-                  <p className="text-amber-200 text-sm">Volume I, Issue 404</p>
+                  <p className="text-amber-200 text-xs sm:text-sm">Volume I, Issue 404</p>
                 </div>
               </div>
             </div>

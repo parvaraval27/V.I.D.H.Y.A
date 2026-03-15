@@ -189,28 +189,28 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-primary/20 p-2 md:p-4 font-sans overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen bg-primary/20 p-2 sm:p-3 md:p-4 font-sans overflow-x-hidden flex items-stretch md:items-center justify-center">
       {/* Main Container - The "Notebook" */}
-      <div className="relative w-full h-[calc(100vh-2rem)] bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-primary/40 flex flex-col md:flex-row">
+      <div className="relative w-full min-h-[calc(100dvh-1rem)] md:h-[calc(100vh-2rem)] bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden border-4 sm:border-[6px] md:border-8 border-primary/40 flex flex-col md:flex-row">
         
         {/* Decorative Binding Rings (Visual Only) */}
-        <div className="absolute left-0 md:left-[280px] top-0 bottom-0 w-8 z-20 flex flex-col justify-evenly pointer-events-none md:flex">
+        <div className="absolute left-0 md:left-[280px] top-0 bottom-0 w-8 z-20 hidden md:flex flex-col justify-evenly pointer-events-none">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="w-6 h-6 -ml-3 rounded-full bg-stone-300 shadow-inner border border-stone-400"></div>
           ))}
         </div>
 
         {/* Floating Header */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+        <div className="absolute top-3 sm:top-6 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-3.5rem)] sm:w-auto">
           <motion.div 
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-white/90 backdrop-blur-md px-6 py-2 rounded-full shadow-lg border border-primary/20 flex items-center gap-4"
+            className="bg-white/90 backdrop-blur-md px-3 sm:px-6 py-2 rounded-full shadow-lg border border-primary/20 flex items-center justify-center gap-2 sm:gap-4"
           >
             <img src="/favicon.png" alt="V.I.D.H.Y.A Logo" className="w-8 h-8 rounded-lg" />
-            <img src="/Logo2.png" alt="V.I.D.H.Y.A" className="h-6 w-auto" />
-            <div className="h-4 w-[1px] bg-border mx-1"></div>
-            <span className="text-sm text-slate-600 hidden sm:inline">{user?.username || user?.email}</span>
+            <img src="/Logo2.png" alt="V.I.D.H.Y.A" className="h-5 sm:h-6 w-auto" />
+            <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block"></div>
+            <span className="text-sm text-slate-600 hidden sm:inline max-w-[180px] truncate">{user?.username || user?.email}</span>
             <div className="relative group">
               <button
                 onClick={logout}
@@ -290,7 +290,7 @@ export default function Home() {
         {/* Mobile Sidebar Trigger */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="absolute top-4 left-4 z-40 md:hidden">
+            <Button variant="ghost" size="icon" className="absolute top-2 left-2 z-40 md:hidden">
               <Menu className="h-6 w-6 text-slate-700" />
             </Button>
           </SheetTrigger>
@@ -340,10 +340,10 @@ export default function Home() {
         </Sheet>
 
         {/* Main Content Area - Notebook Paper */}
-        <main className="flex-1 notebook-paper relative overflow-y-auto scroll-smooth pt-28 pb-12 px-6 md:px-16">
+        <main className="flex-1 notebook-paper relative overflow-y-auto scroll-smooth pt-24 sm:pt-28 pb-10 sm:pb-12 px-4 sm:px-6 md:px-12 lg:px-16">
           
           {/* Hero Section */}
-          <section id="hero" className="min-h-[80vh] flex flex-col justify-center mb-24 relative">
+          <section id="hero" className="min-h-[70vh] md:min-h-[80vh] flex flex-col justify-center mb-20 md:mb-24 relative">
              {/* Doodles/Decorations */}
             <motion.div 
               initial={{ rotate: -10, scale: 0.8, opacity: 0 }}
@@ -362,11 +362,11 @@ export default function Home() {
                 Your entire student life, organized.
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-800">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-slate-800">
                 V.I.D.<span className="text-primary underline decoration-wavy decoration-4 underline-offset-4">H.Y.A</span>
               </h1>
               
-              <p className="text-xl text-slate-600 md:pr-12 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-slate-600 md:pr-12 leading-relaxed">
                 A personal student productivity ecosystem. Centralize your academic goals, DSA progress, and career planning in one intuitive notebook.
               </p>
               
@@ -384,10 +384,10 @@ export default function Home() {
           </section>
 
           {/* Features Sections */}
-          <div className="space-y-32">
+          <div className="space-y-20 md:space-y-32">
             {features.map((feature, index) => (
               <section key={feature.id} id={feature.id} className="scroll-mt-32">
-                <div className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
                   <div className={`p-4 rounded-2xl ${feature.bgColor} ${feature.color} shrink-0`}>
                     {/* Render larger icon clone */}
                     {feature.id === 'dsa' && <Code2 className="w-8 h-8" />}
@@ -400,7 +400,7 @@ export default function Home() {
                   
                   <div className="space-y-4 max-w-xl">
                     <h2 className="text-3xl font-bold text-slate-800 font-hand">{feature.title}</h2>
-                    <p className="text-lg text-slate-600 leading-relaxed">
+                    <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
                       {feature.description}
                     </p>
                     
@@ -411,9 +411,9 @@ export default function Home() {
             ))}
             
             {/* Call to Action Footer inside Notebook */}
-            <section className="py-20 text-center">
-              <h2 className="text-4xl font-bold font-hand text-slate-800 mb-6">Ready to get organized?</h2>
-              <Button size="lg" className="rounded-full bg-primary text-white hover:bg-primary/90 px-10 h-16 text-xl shadow-xl shadow-primary/25 transition-transform hover:scale-105 active:scale-95">
+            <section className="py-14 md:py-20 text-center">
+              <h2 className="text-3xl md:text-4xl font-bold font-hand text-slate-800 mb-6">Ready to get organized?</h2>
+              <Button size="lg" className="rounded-full bg-primary text-white hover:bg-primary/90 px-7 sm:px-10 h-14 sm:h-16 text-lg sm:text-xl shadow-xl shadow-primary/25 transition-transform hover:scale-105 active:scale-95">
                 Join V.I.D.H.Y.A Now
               </Button>
             </section>

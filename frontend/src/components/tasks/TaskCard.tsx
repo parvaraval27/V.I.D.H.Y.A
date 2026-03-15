@@ -79,19 +79,19 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
             <h3 className={`font-hand text-2xl leading-tight ${isCompletedOnce ? 'line-through text-gray-500' : ''}`}>{task.title}</h3>
             {/* One-time task badge */}
             {isOnceTask && !isCompletedOnce && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-100 text-blue-700">
                 One-time
               </span>
             )}
             {/* Frequency badge for multi-target tasks */}
             {taskTarget > 1 && !isOnceTask && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-purple-100 text-purple-700">
                 {todayCount}/{taskTarget}
               </span>
             )}
             {/* Streak badge */}
             {summary?.currentStreak > 0 && !isOnceTask && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-orange-100 text-orange-700">
                 <Flame className="w-3 h-3 mr-1 text-orange-500" />
                 {summary.currentStreak}
               </span>
@@ -99,19 +99,19 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
           </div>
 
           {task.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{task.description}</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{task.description}</p>
           )}
 
           {/* Next due / time remaining - only for recurring tasks */}
           {timeRemaining && !isOnceTask && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">
               Next due: <span className={`font-medium ${fullyDoneToday ? 'text-green-600' : partiallyDoneToday ? 'text-blue-600' : 'text-amber-600'}`}>{timeRemaining}</span>
             </p>
           )}
         </div>
         <div className="ml-2">
             {isCompletedOnce ? (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-600 text-white text-sm font-medium">✓ Done</div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-600 text-white text-xs sm:text-sm font-medium">✓ Done</div>
             ) : (
               <button
                 onClick={handleMark}
@@ -135,7 +135,7 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
         {summary?.currentStreak > 0 && !isOnceTask && (
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-orange-500" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
               {summary.currentStreak} day streak
               {summary.maxStreak > summary.currentStreak && 
                 ` (Best: ${summary.maxStreak})`
@@ -148,10 +148,10 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
         {!isOnceTask && (
           <div>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              <span className="text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400">
                 Completion Rate
               </span>
-              <span className="text-xs font-semibold text-gray-900 dark:text-white">
+              <span className="text-[11px] sm:text-xs font-semibold text-gray-900 dark:text-white">
                 {completionPercentage}%
               </span>
             </div>
@@ -161,7 +161,7 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
 
         {/* Completed message for one-time tasks */}
         {isOnceTask && isCompletedOnce && (
-          <div className="text-sm text-purple-600 dark:text-purple-400 font-medium">
+          <div className="text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-medium">
             ✓ Task completed
           </div>
         )}
@@ -172,7 +172,7 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
             {task.tags.map(tag => (
               <span
                 key={tag}
-                className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded"
+                className="inline-block px-2 py-1 text-[11px] sm:text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded"
               >
                 {tag}
               </span>
@@ -181,7 +181,7 @@ export function TaskCard({ task, summary, onMark, onMarkLoading, onClick }: Task
         )}
 
         {/* Difficulty */}
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
           Difficulty: <span className="font-medium capitalize">{task.difficulty}</span>
         </div>
       </div>
