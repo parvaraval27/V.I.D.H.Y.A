@@ -150,7 +150,7 @@ export default function Home() {
       id: "ai",
       title: "AI Assistant",
       icon: <Bot className="w-5 h-5" />,
-      description: "Chat with documents, summarize notes, and get coding help.",
+      description: "Ask questions, create tasks and get quick coding/resume guidance.",
       color: "text-purple-600",
       bgColor: "bg-purple-100"
     },
@@ -277,13 +277,7 @@ export default function Home() {
               ))}
             </nav>
             
-            <div className="mt-auto pt-8 px-4">
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl rotate-1 shadow-sm">
-                <p className="font-hand text-yellow-800 text-sm">
-                  "The secret to getting ahead is getting started."
-                </p>
-              </div>
-            </div>
+            
           </div>
         </div>
 

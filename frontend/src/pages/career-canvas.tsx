@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Code2, ExternalLink, X, TrendingUp, Tag, Clock, Users } from 'lucide-react';
+import { Briefcase, ExternalLink, TrendingUp, Tag, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -8,12 +8,46 @@ const embedUrl = 'https://careercanvasweb.vercel.app/';
 const overviewSection = {
   title: 'CareerCanvas',
   description:
-    'A quick resume-builder and portfolio creator - design, export and tailor resumes for roles with intelligent templates and shortcuts. Embedded for a fast, in-app experience.'
+    'A quick resume-builder and portfolio creator — design, export and tailor resumes for roles with intelligent templates and shortcuts. Embedded for a fast, in-app experience.',
 };
+
+const features = [
+  {
+    icon: TrendingUp,
+    color: '#7c3aed',
+    bg: '#ede9fe',
+    title: 'Build Faster',
+    desc: 'Use curated templates and structured sections to build a resume in minutes, not hours.',
+    rot: '0.8deg',
+  },
+  {
+    icon: Tag,
+    color: '#1d4ed8',
+    bg: '#dbeafe',
+    title: 'Tailor by Role',
+    desc: 'Customize sections based on job descriptions for a better fit with each application.',
+    rot: '-0.6deg',
+  },
+  {
+    icon: Clock,
+    color: '#15803d',
+    bg: '#dcfce7',
+    title: 'Export & Share',
+    desc: 'Export cleanly to PDF and share with recruiters with one click.',
+    rot: '0.4deg',
+  },
+  {
+    icon: Users,
+    color: '#b45309',
+    bg: '#fef3c7',
+    title: 'Collaborate',
+    desc: 'Get feedback and iterate with peers or mentors before sending it out.',
+    rot: '-0.9deg',
+  },
+];
 
 function CareerCanvasPage() {
   const [isEmbedOpen, setIsEmbedOpen] = useState(false);
-
   const [iframeLoading, setIframeLoading] = useState(false);
   const [iframeError, setIframeError] = useState(false);
   const iframeTimerRef = useRef<number | null>(null);
@@ -25,7 +59,6 @@ function CareerCanvasPage() {
     setTransitionVisible(true);
     const fadeOut = window.setTimeout(() => setTransitionVisible(false), 1000);
     const finish = window.setTimeout(() => setShowTransition(false), 1400);
-
     return () => {
       window.clearTimeout(fadeOut);
       window.clearTimeout(finish);
@@ -50,9 +83,7 @@ function CareerCanvasPage() {
     }
   }, [isEmbedOpen]);
 
-  const openEmbed = () => {
-    setIsEmbedOpen(true);
-  };
+  const openEmbed = () => setIsEmbedOpen(true);
 
   const handleIframeLoad = () => {
     setIframeLoading(false);
@@ -75,206 +106,289 @@ function CareerCanvasPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-white relative overflow-x-hidden">
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, #d1d5db 1px, transparent 1px),
-              linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
-            `,
-            backgroundSize: '24px 24px'
-          }}
-        />
+      {/* ── Page shell: notebook-paper background matching the rest of the app ── */}
+      <div
+        className="min-h-screen relative overflow-x-hidden"
+        style={{
+          backgroundColor: '#ffffff',
+          backgroundImage: `
+            linear-gradient(#dfe7ff 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,0,0,0.18) 1px, transparent 1px)
+          `,
+          backgroundSize: '100% 28px, 40px 100%',
+        }}
+      >
 
-        <div className="absolute left-8 top-0 bottom-0 hidden lg:flex flex-col justify-around py-16 z-20">
-          {[...Array(10)].map((_, i) => (
-            <div key={i} className="relative">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 shadow-lg border-4 border-gray-600" />
-              <div className="absolute inset-2 rounded-full bg-gradient-to-tl from-gray-300 to-gray-200" />
-            </div>
+        {/* ── Spiral binding rings ── */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 hidden lg:flex flex-col items-center justify-around py-12 z-30 pointer-events-none">
+          {[...Array(18)].map((_, i) => (
+            <span
+              key={i}
+              className="block w-4 h-4 rounded-full border-2 border-gray-400 bg-gradient-to-br from-gray-200 to-gray-400 shadow-sm"
+            />
           ))}
         </div>
 
-        <div className="absolute left-28 top-0 bottom-0 w-1 bg-gradient-to-b from-red-400 via-red-300 to-red-400 shadow-sm z-20 hidden lg:block" />
-
+        {/* ── Red margin line ── */}
         <div
-          className="absolute top-0 right-40 w-16 h-64 bg-gradient-to-b from-purple-600 to-purple-700 shadow-xl z-30 hidden md:block"
-          style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)' }}
+          className="absolute top-0 bottom-0 hidden lg:block z-20 pointer-events-none"
+          style={{ left: '52px', width: '3px', background: 'rgba(220,50,50,0.85)', borderRadius: '2px' }}
         />
 
-        <div className="absolute top-0 right-0 w-32 h-32 z-30 hidden md:block">
-          <div
-            className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-gray-300 to-gray-100 shadow-2xl"
-            style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 0)', transform: 'rotateZ(0deg)' }}
-          />
-          <div
-            className="absolute top-0 right-0 w-full h-full bg-gradient-to-tl from-purple-100 to-white"
-            style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 0)' }}
-          />
+        {/* ── Bookmark tab — teal/indigo to differentiate Module 2 ── */}
+        <div
+          className="absolute top-0 right-16 w-12 h-20 z-30 hidden md:block"
+          style={{
+            background: 'linear-gradient(180deg, #0f766e, #0d9488)',
+            clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)',
+            boxShadow: '-2px 4px 12px rgba(13,148,136,0.35)',
+          }}
+        >
+          <span className="text-white text-[9px] font-hand tracking-widest block text-center mt-3" style={{ writingMode: 'vertical-rl' }}>CV</span>
         </div>
 
-        <div className="relative mx-2 sm:mx-4 md:mx-8 pt-8 sm:pt-12 pb-12 sm:pb-16 flex justify-center">
-          <div className="flex-1 max-w-4xl">
-            <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-3xl shadow-2xl border-4 border-purple-300 overflow-hidden" style={{ boxShadow: '0 20px 60px rgba(126, 34, 206, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6)' }}>
-              <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E")`, backgroundRepeat: 'repeat', backgroundSize: '200px 200px' }} />
+        {/* ── Dog-ear corner ── */}
+        <div className="absolute top-0 right-0 w-16 h-16 z-20 hidden md:block pointer-events-none overflow-hidden">
+          <div className="absolute top-0 right-0 w-full h-full"
+            style={{ background: 'linear-gradient(225deg, #e5e7eb 45%, transparent 45%)' }} />
+          <div className="absolute top-0 right-0 w-full h-full"
+            style={{ background: 'linear-gradient(225deg, transparent 45%, #f0fdf4 45%)' }} />
+        </div>
 
-              <div className="relative p-4 sm:p-8 pb-6 border-b-2 border-dashed border-purple-200">
-                <div className="inline-block relative">
-                  <div className="absolute inset-0 bg-yellow-200 transform -skew-x-12 opacity-40" />
-                  <h2 className="text-3xl sm:text-4xl text-purple-900 relative px-4" style={{ fontFamily: 'Georgia, serif' }}>{overviewSection.title}</h2>
-                </div>
-                <div className="mt-3 sm:mt-0 sm:absolute sm:top-4 sm:right-6">
-                  <Button variant="ghost" size="sm" onClick={() => window.history.back()} className="text-purple-600 border-2 border-transparent hover:border-purple-300 hover:bg-purple-50">
-                    ← Back
-                  </Button>
-                </div>
-              </div>
+        {/* ── Main notebook content area ── */}
+        <div className="relative pl-4 lg:pl-20 pr-4 lg:pr-16 pt-10 pb-16 max-w-[1200px] mx-auto">
 
-              <div className="p-4 sm:p-8 space-y-6">
-                <div className="bg-purple-50/50 border-l-8 border-purple-600 rounded-r-xl p-6 shadow-inner">
-                  <p className="text-sm sm:text-base text-gray-800 leading-relaxed" style={{ fontFamily: 'Georgia, serif' }}>{overviewSection.description}</p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
-                    <Button onClick={openEmbed} className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-8 py-6 text-base sm:text-lg rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
-                      <Code2 className="w-5 h-5 mr-2" />
-                      Launch Tool
-                    </Button>
-
-                    <Button variant="outline" onClick={() => window.open(embedUrl, '_blank')} className="border-3 border-purple-600 text-purple-700 hover:bg-purple-50 px-8 py-6 text-base sm:text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all">
-                      <ExternalLink className="w-5 h-5 mr-2" />
-                      Open in New Tab
-                    </Button>
-                  </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                      <div className="bg-white rounded-xl p-5 border-2 border-purple-200 shadow-md hover:shadow-xl transition-all hover:border-purple-400 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-purple-100 rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative">
-                          <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-3">
-                            <TrendingUp className="w-5 h-5 text-white" />
-                          </div>
-                          <h3 className="text-purple-900 mb-2">Build Faster</h3>
-                          <p className="text-xs sm:text-sm text-gray-600">Use curated templates and structured sections to build a resume quickly</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-white rounded-xl p-5 border-2 border-purple-200 shadow-md hover:shadow-xl transition-all hover:border-purple-400 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-100 rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative">
-                          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mb-3">
-                            <Tag className="w-5 h-5 text-white" />
-                          </div>
-                          <h3 className="text-blue-900 mb-2">Tailor by Role</h3>
-                          <p className="text-xs sm:text-sm text-gray-600">Customize sections based on job descriptions for better fit</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-white rounded-xl p-5 border-2 border-purple-200 shadow-md hover:shadow-xl transition-all hover:border-purple-400 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-green-100 rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative">
-                          <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mb-3">
-                            <Clock className="w-5 h-5 text-white" />
-                          </div>
-                          <h3 className="text-green-900 mb-2">Export & Share</h3>
-                          <p className="text-xs sm:text-sm text-gray-600">Export to PDF and share with recruiters</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-white rounded-xl p-5 border-2 border-purple-200 shadow-md hover:shadow-xl transition-all hover:border-purple-400 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-amber-100 rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative">
-                          <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center mb-3">
-                            <Users className="w-5 h-5 text-white" />
-                          </div>
-                          <h3 className="text-amber-900 mb-2">Collaborate</h3>
-                          <p className="text-xs sm:text-sm text-gray-600">Get feedback and iterate with peers or mentors</p>
-                        </div>
-                      </div>
-                </div>
-              </div>
-
-              <div className="px-8 py-4 border-t-2 border-purple-200 bg-purple-50/50 flex justify-between items-center">
-                <div className="text-xs sm:text-sm text-gray-500">V.I.D.H.Y.A • CareerCanvas Module</div>
-                <div className="text-xs sm:text-sm text-gray-500" style={{ fontFamily: 'Georgia, serif' }}>Page 2</div>
-              </div>
+          {/* Page header */}
+          <div className="flex items-start justify-between mb-1">
+            <div>
+              <h1 className="font-hand text-3xl sm:text-4xl text-teal-900 mt-0.5 leading-tight">
+                CareerCanvas
+                <span
+                  className="block h-3 -mt-3 opacity-40 rounded"
+                  style={{ background: '#99f6e4', maxWidth: '11rem' }}
+                />
+              </h1>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="font-hand text-teal-600 hover:bg-teal-50 border border-dashed border-teal-300 mt-1"
+            >
+              ← Back
+            </Button>
+          </div>
 
-            <div className="mt-8 hidden lg:flex gap-4 justify-end">
-              <div className="bg-yellow-100 p-5 shadow-xl transform rotate-2 border-b-4 border-yellow-400 rounded-sm max-w-xs">
-                <p className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'cursive' }}>
-                  <strong>Quick Tip:</strong>
-                </p>
-                <p className="text-xs text-gray-600">Use action verbs and metrics to demonstrate impact on your resume.</p>
+          {/* Divider */}
+          <div className="border-b-2 border-dashed border-teal-200 mb-6 mt-2" />
+
+          {/* ── Description block ── */}
+          <div
+            className="relative mb-6 pl-5 pr-4 py-4 rounded-r-xl"
+            style={{
+              borderLeft: '5px solid #0d9488',
+              background: 'linear-gradient(135deg, rgba(204,251,241,0.6), rgba(255,255,255,0.9))',
+              boxShadow: '2px 4px 14px rgba(13,148,136,0.07)',
+            }}
+          >
+            <span className="font-hand text-[10px] text-teal-400 absolute -top-2.5 left-4 bg-white px-1">description</span>
+            <p className="font-hand text-base sm:text-lg text-gray-800 leading-relaxed">
+              {overviewSection.description}
+            </p>
+          </div>
+
+          {/* ── Quick Actions ── */}
+          <div
+            className="relative mb-7 p-5 rounded-xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.97), rgba(240,253,250,0.95))',
+              border: '1.5px solid rgba(0,0,0,0.07)',
+              boxShadow: '0 4px 18px rgba(16,24,40,0.06), 2px 2px 0 rgba(13,148,136,0.08)',
+            }}
+          >
+            {/* corner fold */}
+            <div
+              className="absolute top-0 right-0 w-8 h-8 pointer-events-none"
+              style={{ background: 'linear-gradient(225deg, #99f6e4 45%, transparent 45%)' }}
+            />
+
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+              <div>
+                <p className="font-hand text-[11px] uppercase tracking-[0.2em] text-teal-400 mb-0.5">Quick Actions</p>
+                <h3 className="font-hand text-xl text-teal-900">Launch CareerCanvas</h3>
+                <p className="font-hand text-sm text-gray-500 mt-0.5">Use the in-app builder or open the full page in a new tab.</p>
               </div>
 
-              <div className="bg-green-100 p-5 shadow-xl transform -rotate-1 border-b-4 border-green-400 rounded-sm max-w-xs">
-                <p className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'cursive' }}>
-                  <strong>Study Hack:</strong>
-                </p>
-                <p className="text-xs text-gray-600">Keep a master list of achievements to quickly populate different resumes. 🧠</p>
+              <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                <Button
+                  size="lg"
+                  onClick={openEmbed}
+                  className="min-w-[175px] justify-center font-hand text-base"
+                  style={{ fontFamily: 'var(--font-hand)', background: '#0d9488', borderColor: '#0d9488' }}
+                >
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  Launch Tool
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => window.open(embedUrl, '_blank')}
+                  className="min-w-[175px] justify-center font-hand text-base border-teal-300 text-teal-700 bg-white hover:bg-teal-50"
+                  style={{ fontFamily: 'var(--font-hand)' }}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open in New Tab
+                </Button>
               </div>
             </div>
           </div>
-        </div>
 
+          {/* ── Feature cards ── */}
+          <p className="font-hand text-xs text-teal-400 tracking-widest uppercase mb-3">What you get ↓</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+            {features.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={i}
+                  className="relative p-5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 group"
+                  style={{
+                    background: 'linear-gradient(160deg, rgba(255,255,255,0.98), rgba(248,254,252,0.98))',
+                    border: '1.5px solid rgba(0,0,0,0.065)',
+                    boxShadow: '0 6px 20px rgba(16,24,40,0.06), 1px 1px 0 rgba(0,0,0,0.03)',
+                    transform: `rotate(${f.rot})`,
+                  }}
+                >
+                  {/* lined paper hint */}
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-30 pointer-events-none"
+                    style={{
+                      backgroundImage: 'linear-gradient(#dfe7ff 1px, transparent 1px)',
+                      backgroundSize: '100% 22px',
+                      backgroundPosition: '0 28px',
+                    }}
+                  />
+                  {/* left mini-margin */}
+                  <div
+                    className="absolute left-8 top-0 bottom-0 w-px pointer-events-none"
+                    style={{ background: 'rgba(220,50,50,0.15)' }}
+                  />
+                  <div className="relative flex items-start gap-4">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+                      style={{ background: f.bg }}
+                    >
+                      <Icon className="w-5 h-5" style={{ color: f.color }} />
+                    </div>
+                    <div>
+                      <h3 className="font-hand text-lg leading-tight mb-1" style={{ color: f.color }}>{f.title}</h3>
+                      <p className="font-hand text-sm text-gray-600 leading-relaxed">{f.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      </div>
+          {/* ── Sticky note tips ── */}
+          <div className="hidden lg:flex justify-between">
+            <div
+              className="p-5 max-w-[220px] rounded-sm shadow-xl"
+              style={{
+                background: 'linear-gradient(170deg, #fef9c3, #fde68a)',
+                transform: 'rotate(2deg)',
+                borderBottom: '4px solid #ca8a04',
+                boxShadow: '3px 6px 18px rgba(0,0,0,0.18)',
+              }}
+            >
+              <p className="font-hand text-sm text-amber-900 font-bold mb-1">Quick Tip</p>
+              <p className="font-hand text-xs text-amber-800 leading-relaxed">Use action verbs and metrics to demonstrate impact on your resume.</p>
+            </div>
+            <div
+              className="p-5 max-w-[220px] rounded-sm shadow-xl"
+              style={{
+                background: 'linear-gradient(170deg, #dcfce7, #bbf7d0)',
+                transform: 'rotate(-1.5deg)',
+                borderBottom: '4px solid #16a34a',
+                boxShadow: '3px 6px 18px rgba(0,0,0,0.18)',
+              }}
+            >
+              <p className="font-hand text-sm text-green-900 font-bold mb-1">Resume Insight</p>
+              <p className="font-hand text-xs text-green-800 leading-relaxed">Do check ATS scores of the resumes you make</p>
+            </div>
+          </div>
 
-      {/* Module transition overlay */}
+          {/* ── Page footer ── */}
+          <div className="mt-10 pt-3 border-t-2 border-dashed border-teal-200 flex justify-between items-center">
+            <span className="font-hand text-xs text-gray-400">V.I.D.H.Y.A · CareerCanvas Module</span>
+            <span className="font-hand text-xs text-gray-400">Page 2</span>
+          </div>
+
+        </div>{/* /main content */}
+      </div>{/* /page shell */}
+
+      {/* ── Module transition overlay ── */}
       {showTransition && (
         <div className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-all duration-500 ${transitionVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-          <div className="text-6xl font-hand text-purple-800 tracking-wide">Module 2</div>
+          <div className="text-6xl font-hand text-teal-700 tracking-wide">Module 2</div>
         </div>
       )}
 
+      {/* ── Embed dialog ── */}
       <Dialog open={isEmbedOpen} onOpenChange={(open) => { if (!open) handleModalClose(); else setIsEmbedOpen(true); }}>
         <DialogContent className="w-[calc(100vw-1rem)] max-w-7xl h-[88vh] p-0 overflow-hidden">
           <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b-2 border-purple-300 bg-gradient-to-r from-purple-50 to-purple-100">
+            <div
+              className="flex items-center justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b-2 border-teal-200"
+              style={{
+                background: 'linear-gradient(90deg, rgba(204,251,241,0.7), rgba(255,255,255,0.9))',
+                backgroundImage: 'linear-gradient(#dfe7ff 1px, transparent 1px)',
+                backgroundSize: '100% 28px',
+              }}
+            >
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <Code2 className="w-6 h-6 text-purple-700" />
-                <h3 className="text-base sm:text-2xl text-purple-800 truncate" style={{ fontFamily: 'Georgia, serif' }}>CareerCanvas - Resume Builder</h3>
+                <Briefcase className="w-5 h-5 text-teal-700" />
+                <h3 className="font-hand text-base sm:text-xl text-teal-800 truncate">CareerCanvas · Resume Builder</h3>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Button variant="ghost" size="sm" onClick={() => window.open(embedUrl, '_blank')} className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 border-2 border-transparent hover:border-purple-300">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open in new tab
+                <Button variant="ghost" size="sm" onClick={() => window.open(embedUrl, '_blank')} className="font-hand text-teal-600 hover:bg-teal-50 border border-dashed border-teal-300">
+                  <ExternalLink className="w-4 h-4 mr-1" /> New tab
                 </Button>
-                <Button variant="ghost" size="sm" onClick={handleModalClose} className="text-gray-600 hover:text-gray-700 hover:bg-gray-100">
+                <Button variant="ghost" size="sm" onClick={handleModalClose} className="font-hand text-gray-500 hover:bg-gray-100">
                   Close
                 </Button>
               </div>
             </div>
 
-            <div className="flex-1 bg-gradient-to-br from-purple-50 via-blue-50 to-purple-100">
-              <div className="relative h-full flex items-stretch">
-                {iframeLoading && (
-                  <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/70">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <div className="flex-1 relative" style={{ background: 'linear-gradient(135deg, #f0fdf4, #f0fdfa)' }}>
+              {iframeLoading && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/70">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500" />
+                </div>
+              )}
+              {iframeError && (
+                <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-white/90 p-6 text-center">
+                  <p className="font-hand text-lg text-slate-700 mb-3">Embedding blocked or taking too long.</p>
+                  <div className="flex gap-3">
+                    <Button className="font-hand" onClick={() => window.open(embedUrl, '_blank')}>Open in new tab</Button>
+                    <Button className="font-hand" variant="outline" onClick={() => {
+                      setIframeError(false);
+                      setIframeLoading(true);
+                      iframeTimerRef.current = window.setTimeout(() => {
+                        setIframeLoading(false); setIframeError(true);
+                      }, 8000) as unknown as number;
+                    }}>Retry</Button>
                   </div>
-                )}
-
-                {iframeError && (
-                  <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-white/90 p-6 text-center">
-                    <p className="text-lg text-slate-700 mb-3">Embedding blocked or taking too long.</p>
-                    <div className="flex gap-3">
-                      <Button onClick={() => window.open(embedUrl, '_blank')}>Open in new tab</Button>
-                      <Button variant="outline" onClick={() => { setIframeError(false); setIframeLoading(true); iframeTimerRef.current = window.setTimeout(() => { setIframeLoading(false); setIframeError(true); }, 8000) as unknown as number; }}>Retry</Button>
-                    </div>
-                  </div>
-                )}
-
-                <iframe
-                  src={embedUrl}
-                  className="w-full h-full border-0"
-                  title="CareerCanvas - Resume Builder"
-                  onLoad={handleIframeLoad}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                />
-              </div>
+                </div>
+              )}
+              <iframe
+                src={embedUrl}
+                className="w-full h-full border-0"
+                title="CareerCanvas - Resume Builder"
+                onLoad={handleIframeLoad}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              />
             </div>
           </div>
         </DialogContent>
