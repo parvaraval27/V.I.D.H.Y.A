@@ -318,6 +318,7 @@ function DsaHelperPage() {
           </div>
 
           {/* ── Page footer ── */}
+          {/*checking smth */}
           <div className="mt-10 pt-3 border-t-2 border-dashed border-purple-200 flex justify-between items-center">
             <span className="font-hand text-xs text-gray-400">V.I.D.H.Y.A · Codeforces Module</span>
             <span className="font-hand text-xs text-gray-400">Page 1</span>
